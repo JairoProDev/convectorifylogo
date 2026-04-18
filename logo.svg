@@ -1,0 +1,309 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+  <defs>
+    <!-- Grain texture for background -->
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feBlend in="SourceGraphic" mode="multiply"/>
+    </filter>
+  </defs>
+
+  <!-- Background with texture -->
+  <rect width="500" height="500" fill="#e8e4dc" filter="url(#grain)"/>
+
+  <!-- 
+    LOGO CONSTRUCTION:
+    Center: (250, 260)
+    Hexagon radius (outer): ~175px
+    Hex points (flat-top, pointy sides):
+      top-left:  (178, 110)
+      top-right: (322, 110)
+      right:     (397, 240)  -- this segment is OPEN (C shape)
+      bot-right: (322, 370)
+      bot-left:  (178, 370)
+      left:      (103, 240)
+  -->
+
+  <!-- 
+    OUTER "C" HEXAGON SHAPE (thick, open on right)
+    Built as a filled path using even-odd rule to create thick stroke effect.
+    Outer hex radius: 175, Inner hex radius: 128
+    Center: (250, 255)
+  -->
+  <g transform="translate(250, 255)">
+    <!-- 
+      Hexagon vertices (pointy-top orientation, rotated 30deg = flat left/right sides):
+      Actually the logo has flat top/bottom — so it's a "pointy left/right" flat-top hexagon.
+      
+      Flat-top hex (q=0 at top):
+      angle = 0,60,120,180,240,300 degrees
+      
+      But looking at image: top is flat, sides are diagonal, bottom is flat. 
+      This is "flat-top" hex:
+      vertices at angles: 30, 90, 150, 210, 270, 330 degrees
+      
+      With R=175 (outer), r=128 (inner):
+      Outer vertices:
+        top-right:  (R*cos30, -R*sin30)  = (151.6, -87.5)
+        top-left:   (-151.6, -87.5)
+        left:       (-175, 0)
+        bot-left:   (-151.6, 87.5)
+        bot-right:  (151.6, 87.5)
+        right:      (175, 0)   <- OPEN SIDE
+    -->
+
+    <!-- Outer C shape path - hexagon open on the right -->
+    <!-- 
+      Strategy: 
+      - Draw outer path of C (going from top-right outer point, across top, down left, across bottom, up to bottom-right outer point)
+      - Then inner path (going from bottom-right inner point, across bottom inner, up left inner, across top inner, down to top-right inner point)
+      The "gap" on the right is the opening of the C.
+      
+      Outer hex flat-top, R=175:
+        NW: (-151.6, -87.5)
+        N_left = top-left of top edge  
+      
+      Let me use concrete coordinates:
+      Outer R=175, flat-top hex (angles 0,60,120,180,240,300 where 0=right):
+        0°   (right):      (175, 0)
+        60°  (bot-right):  (87.5, 151.6)
+        120° (bot-left):   (-87.5, 151.6)
+        180° (left):       (-175, 0)
+        240° (top-left):   (-87.5, -151.6)
+        300° (top-right):  (87.5, -151.6)
+      
+      Inner R=128:
+        0°:   (128, 0)
+        60°:  (64, 110.9)
+        120°: (-64, 110.9)
+        180°: (-128, 0)
+        240°: (-64, -110.9)
+        300°: (64, -110.9)
+      
+      The C opens on the RIGHT side (0° vertex).
+      So we go from 300° outer → 240° → 180° → 120° → 60° outer
+      then close via inner: 60° inner → 120° → 180° → 240° → 300° inner
+      
+      We need to add the "end caps" at 300° and 60° to close the C ends.
+    -->
+    <path fill="#1a1a1a" fill-rule="evenodd" d="
+      M 87.5,-151.6
+      L -87.5,-151.6
+      L -175,0
+      L -87.5,151.6
+      L 87.5,151.6
+      L 64,110.9
+      L -64,110.9
+      L -128,0
+      L -64,-110.9
+      L 64,-110.9
+      Z
+    "/>
+  </g>
+
+  <!--
+    INNER "V" WITH UP-ARROW (gem top)
+    The V sits inside the hexagon, touching roughly:
+    - Left arm: from top-left area going down to center-bottom
+    - Right arm: from top-right area going down to center-bottom
+    - Top of V has an upward-pointing arrow/triangle
+    - At center of V there's a gem shape
+    
+    Looking at the image:
+    - The V bottom point is around y=380, x=250
+    - The V top-left point is around x=140, y=200
+    - The V top-right point is around x=360, y=200
+    - The upward arrow top point is around y=145
+    - The gem center is around y=270
+  -->
+
+  <!-- 
+    V SHAPE WITH ARROW: 
+    The inner shape is a "V" made of two thick diagonal arms.
+    At the top, both arms meet at an upward-pointing triangle/arrow.
+    
+    I'll build the inner shape as a filled polygon (outline effect).
+    
+    Outer V-with-arrow path (clockwise):
+      Arrow tip top: (250, 140)
+      Arrow right shoulder: (310, 195)
+      Right arm outer-right: (370, 195)
+      Right arm bottom-right: (290, 390)
+      V bottom outer: (270, 390)
+      V bottom inner: (250, 355)
+      (mirror for left side)
+      Left arm bottom-left: (210, 390)
+      Left arm outer-left: (130, 195)
+      Arrow left shoulder: (190, 195)
+    
+    Inner cutout (the gap inside the V arms):
+      Need to subtract inner parts.
+      
+    Actually, let me build the V shape as a filled outline:
+    The V has uniform thickness. Let me trace the outer silhouette.
+  -->
+
+  <!-- V BODY: Left arm (outer silhouette, going down-left to bottom) -->
+  <!-- Let me think of it as a full shape path -->
+
+  <g transform="translate(250, 255)">
+    <!--
+      V + Arrow inner shape
+      All coords relative to center (250,255) → so use offsets
+      
+      Arrow:
+        Top tip: (0, -115)
+        Left shoulder outer: (-60, -60)
+        Right shoulder outer: (60, -60)
+        Left shoulder inner: (-25, -60)
+        Right shoulder inner: (25, -60)
+        
+      V arms (thickness ~40):
+        Left arm goes from (-25,-60) top-inner to (-25, 130) bottom-inner
+        then to (-45, 130) then to bottom tip...
+        
+      Let me trace the entire shape as one path (outer edge clockwise, then inner cutout counter-clockwise):
+      
+      The shape outline (everything filled black except the inner gem area and arm gaps):
+      
+      Outer silhouette of the entire V+arrow shape:
+        Start at arrow tip: (0, -115)
+        → right outer shoulder: (65, -58)
+        → right arm top-outer: (120, -58)
+        → right arm bottom outer: (38, 128)   (right outer edge going down-right)
+        Wait, the arm goes diagonally...
+        
+      Let me look at this differently.
+      
+      The "V" shape outer boundary:
+      - Arrow tip at top: (0, -115)
+      - Goes right to right shoulder top: (65, -58)
+      - Then right along top of right arm: (115, -58)  
+      - Then diagonally down-right following right arm outer edge: this arm angles ~45° downward
+      - Right arm bottom-right corner: (42, 130)
+      - V bottom-right: (18, 130)
+      - V bottom point: (0, 100)   <- bottom of V
+      - V bottom-left: (-18, 130)
+      - Left arm bottom-left: (-42, 130)
+      - Left arm top-left outer: (-115, -58)
+      - Left shoulder top: (-65, -58)
+      - Back to arrow tip: (0, -115)
+      
+      Inner cutout (the open space inside V arms - not needed if I do it differently)
+      
+      Hmm, looking at the actual image more carefully:
+      The V body IS solid black on the arms (no cutout inside arms).
+      The whitespace is BETWEEN the arms (the V opening) and the inside of the arm thickness.
+      
+      Actually the V+Arrow looks like a downward-pointing chevron/arrow shape combined.
+      
+      Let me re-examine: 
+      - Two diagonal thick arms form a V
+      - At the top, they connect with an upward-pointing triangular notch
+      - The inner face of the V arms and the bottom V tip are concave
+      
+      Let me build it as a single polygon for the outer fill:
+    -->
+    
+    <!-- THE COMPLETE INNER ICON SHAPE -->
+    <!-- Arrow + V body filled shape -->
+    <path fill="#1a1a1a" fill-rule="evenodd" d="
+      M 0,-115
+      L 68,-55
+      L 113,-55
+      L 35,132
+      L 10,132
+      L 0,108
+      L -10,132
+      L -35,132
+      L -113,-55
+      L -68,-55
+      Z
+    "/>
+
+    <!-- Inner whitespace cutout to create the V opening/channel -->
+    <!-- Inner V cutout: the open channel between the left and right arms -->
+    <path fill="#e8e4dc" d="
+      M 0,-75
+      L 55,-22
+      L 90,-22
+      L 20,105
+      L 0,80
+      L -20,105
+      L -90,-22
+      L -55,-22
+      Z
+    "/>
+
+    <!-- GEM / CRYSTAL SHAPE (inner element) -->
+    <!-- 
+      The gem sits in the center of the V.
+      It's a triangle pointing DOWN with internal line details.
+      Center roughly at (0, 20).
+      
+      Gem outer triangle:
+        Top-left: (-52, -10)
+        Top-right: (52, -10)
+        Bottom tip: (0, 65)
+      
+      Internal gem lines (3 lines from center meeting point):
+        Center: (0, 15)
+        Line to top-left: (-52, -10)
+        Line to top-right: (52, -10)  
+        Line to bottom: (0, 65)
+    -->
+
+    <!-- Gem body (filled) -->
+    <path fill="#1a1a1a" d="
+      M -52,-8
+      L 52,-8
+      L 0,65
+      Z
+    "/>
+
+    <!-- Gem inner lines (white channels) to create facet effect -->
+    <!-- Left facet -->
+    <path fill="#e8e4dc" d="
+      M -47,-5
+      L -3,12
+      L -3,-5
+      Z
+    "/>
+    <!-- Right facet -->
+    <path fill="#e8e4dc" d="
+      M 47,-5
+      L 3,12
+      L 3,-5
+      Z
+    "/>
+    <!-- Bottom facet -->
+    <path fill="#e8e4dc" d="
+      M -3,14
+      L 3,14
+      L 0,61
+      Z
+    "/>
+
+    <!-- Gem top horizontal edge detail (small upward triangle above gem) -->
+    <!-- The upward arrow at the top of the V arms -->
+    <!-- Small triangle notch pointing up, visible above the gem inside the V opening -->
+    <path fill="#1a1a1a" d="
+      M 0,-90
+      L 52,-22
+      L 90,-22
+      L 0,-68
+      L -90,-22
+      L -52,-22
+      Z
+    "/>
+
+    <!-- White fill inside the upward arrow to make it look like open/outlined -->
+    <path fill="#e8e4dc" d="
+      M 0,-75
+      L 55,-22
+      L -55,-22
+      Z
+    "/>
+
+  </g>
+</svg>

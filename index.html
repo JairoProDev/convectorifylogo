@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Convectorify Logo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0d0d0d;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      gap: 48px;
+      font-family: 'Inter', sans-serif;
+      padding: 40px;
+    }
+    h1 {
+      color: #383838;
+      font-size: 10px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      font-weight: 400;
+    }
+    .row {
+      display: flex;
+      gap: 48px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .logo-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+    .logo-label {
+      color: #383838;
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Convectorify — Logo</h1>
+
+  <div class="row">
+
+    <!--
+    ════════════════════════════════════════════════════════
+    LOGO RECREATION — CONVECTORIFY
+
+    Canvas: 500×500, center: (250, 250)
+
+    OUTER HEX (pointy-top, R=200):
+      Top(0°):      250,  50
+      TR(60°):      423.2,150
+      BR(120°):     423.2,350
+      Bot(180°):    250, 450
+      BL(240°):     76.8, 350
+      TL(300°):     76.8, 150
+
+    INNER HEX (R=138):
+      Top:          250, 112
+      TR:           369.5,181
+      BR:           369.5,319
+      Bot:          250, 388
+      BL:           130.5,319
+      TL:           130.5,181
+
+    C FRAME = thick ring open on right:
+      Outer CCW from TR: TR→T→TL→BL→BOT→BR
+      End cap BR → inner BR
+      Inner CW back: inner_BR→BOT→BL→TL→T→TR
+      Close → TR outer
+
+    CV INNER SHAPE = composed of:
+      Left arm (black triangle-strip):
+        Goes from arrow-tip (250,115) to left-shoulder to bottom of V area
+      Right arm (mirror)
+      Plus the gem in the negative space
+
+    ════════════════════════════════════════════════════════
+
+    CRITICAL INSIGHT from original image:
+    The V+Arrow inner element works like this:
+    - The BACKGROUND COLOR shows through the inner hex area as a large shape
+    - On TOP of that background, two thick BLACK diagonal ARMS form the V
+    - The arms are drawn separately and simply painted dark
+    - The resulting negative space creates the large upward △ and V channel
+
+    So the construction is:
+    1. Draw C frame (dark)
+    2. The inner hex area is automatically "open" (background shows)
+    3. Draw LEFT ARM (dark trapezoid/diagonal strip) inside
+    4. Draw RIGHT ARM (mirror)
+    5. Draw GEM on top (dark triangle with light facet lines)
+
+    The LEFT ARM silhouette (points in order):
+      - Start at arrow tip: (250, 115)
+      - Go left-down to outer left corner: (134, 215)
+      - Continue down along outer edge to bottom-left: (198, 398)
+      - Step right to inner bottom-left: (224, 387)
+      - Come back up along inner edge to inner left shoulder: (192, 226)
+      - Go back up-right to inner arrow tip: (250, 158)
+      - Close
+
+    RIGHT ARM (mirror):
+      (250,115) → (366,215) → (302,398) → (276,387) → (308,226) → (250,158)
+    ════════════════════════════════════════════════════════
+    -->
+
+    <!-- LIGHT VERSION -->
+    <div class="logo-card">
+      <span class="logo-label">Claro</span>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="340" height="340">
+        <defs>
+          <filter id="grain" x="0%" y="0%" width="100%" height="100%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.72" numOctaves="4" seed="12" stitchTiles="stitch" result="n"/>
+            <feColorMatrix in="n" type="saturate" values="0" result="g"/>
+            <feBlend in="SourceGraphic" in2="g" mode="multiply"/>
+          </filter>
+        </defs>
+        <!-- Background -->
+        <rect width="500" height="500" fill="#e5e0d5" filter="url(#grain)"/>
+
+        <!-- ── C HEX FRAME ── -->
+        <path fill="#1c1b17" d="
+          M 423,150 L 250,50 L 77,150 L 77,350 L 250,450 L 423,350
+          L 369,319 L 250,388 L 131,319 L 131,181 L 250,112 L 369,181 Z
+        "/>
+
+        <!-- ── LEFT ARM ── -->
+        <!-- Outer L-arm: arrow tip → L outer shoulder → L outer bottom → (slight inward) -->
+        <!-- Inner L-arm: inner bottom → inner shoulder → inner arrow tip -->
+        <!-- THIS IS THE SEPARATE LEFT DIAGONAL BLACK STRIP -->
+        <path fill="#1c1b17" d="
+          M 250,115
+          L 130,215
+          L 198,398
+          L 224,387
+          L 192,228
+          L 250,158
+          Z
+        "/>
+
+        <!-- ── RIGHT ARM (mirror) ── -->
+        <path fill="#1c1b17" d="
+          M 250,115
+          L 370,215
+          L 302,398
+          L 276,387
+          L 308,228
+          L 250,158
+          Z
+        "/>
+
+        <!--
+          ── GEM ──
+          Downward triangle in CENTER of white space
+          White space center ≈ (250, 240) roughly
+          Gem: top-left(196,218) top-right(304,218) bottom(250,300)
+          Facet center: (250, 254)
+        -->
+        <path fill="#1c1b17" d="M 196,218 L 304,218 L 250,300 Z"/>
+        <line x1="196" y1="218" x2="250" y2="254" stroke="#e5e0d5" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="304" y1="218" x2="250" y2="254" stroke="#e5e0d5" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="250" y1="254" x2="250" y2="300" stroke="#e5e0d5" stroke-width="3.5" stroke-linecap="round"/>
+
+      </svg>
+    </div>
+
+    <!-- DARK VERSION -->
+    <div class="logo-card">
+      <span class="logo-label">Oscuro</span>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="340" height="340">
+        <rect width="500" height="500" fill="#0d0d0d"/>
+        <path fill="#e5e0d5" d="
+          M 423,150 L 250,50 L 77,150 L 77,350 L 250,450 L 423,350
+          L 369,319 L 250,388 L 131,319 L 131,181 L 250,112 L 369,181 Z
+        "/>
+        <path fill="#e5e0d5" d="
+          M 250,115 L 130,215 L 198,398 L 224,387 L 192,228 L 250,158 Z
+        "/>
+        <path fill="#e5e0d5" d="
+          M 250,115 L 370,215 L 302,398 L 276,387 L 308,228 L 250,158 Z
+        "/>
+        <path fill="#e5e0d5" d="M 196,218 L 304,218 L 250,300 Z"/>
+        <line x1="196" y1="218" x2="250" y2="254" stroke="#0d0d0d" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="304" y1="218" x2="250" y2="254" stroke="#0d0d0d" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="250" y1="254" x2="250" y2="300" stroke="#0d0d0d" stroke-width="3.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <!-- CARD VERSION -->
+    <div class="logo-card">
+      <span class="logo-label">Card</span>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="340" height="340">
+        <rect width="500" height="500" fill="#161614" rx="24"/>
+        <path fill="#e5e0d5" d="
+          M 423,150 L 250,50 L 77,150 L 77,350 L 250,450 L 423,350
+          L 369,319 L 250,388 L 131,319 L 131,181 L 250,112 L 369,181 Z
+        "/>
+        <path fill="#e5e0d5" d="
+          M 250,115 L 130,215 L 198,398 L 224,387 L 192,228 L 250,158 Z
+        "/>
+        <path fill="#e5e0d5" d="
+          M 250,115 L 370,215 L 302,398 L 276,387 L 308,228 L 250,158 Z
+        "/>
+        <path fill="#e5e0d5" d="M 196,218 L 304,218 L 250,300 Z"/>
+        <line x1="196" y1="218" x2="250" y2="254" stroke="#161614" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="304" y1="218" x2="250" y2="254" stroke="#161614" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="250" y1="254" x2="250" y2="300" stroke="#161614" stroke-width="3.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+  </div>
+
+</body>
+</html>
