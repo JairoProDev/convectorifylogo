@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vectorify | Glifo Monolítico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Transiciones suaves para demostrar la adaptabilidad del color */
+        body { transition: background-color 0.5s ease, color 0.5s ease; }
+        .logo-container {
+            /* Sombra sutil solo para la presentación, el SVG en sí es plano */
+            filter: drop-shadow(0 20px 25px rgba(0, 0, 0, 0.1));
+        }
+    </style>
+</head>
+<body class="bg-white text-black min-h-screen flex flex-col items-center justify-center font-sans">
+
+    <div class="absolute top-10 flex gap-4 text-sm font-semibold tracking-widest uppercase">
+        <button onclick="toggleTheme()" class="px-6 py-2 border-2 border-current rounded-full hover:opacity-70 transition-opacity">
+            Toggle Dark/Light Mode
+        </button>
+    </div>
+
+    <div class="logo-container w-96 h-96 md:w-[32rem] md:h-[32rem]">
+        <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            viewBox="-1000 -1000 2000 2000" 
+            class="w-full h-full fill-current"
+        >
+            <path d="
+                M 0 -1000 
+                L 800 -538.12 
+                L 800 -288.12 
+                L 0 -750 
+                L -649.52 -375 
+                L -649.52 375 
+                L 0 750 
+                L 800 288.12 
+                L 800 538.12 
+                L 0 1000 
+                L -866.03 500 
+                L -866.03 -500 
+                Z" 
+            />
+
+            <path fill-rule="evenodd" d="
+                M 0 650 
+                L 450 -288 
+                L 250 -288 
+                L 0 -163 
+                L -250 -288 
+                L -450 -288 
+                Z 
+
+                M 20 -128 
+                L 220 -228 
+                L 20 189 
+                Z 
+
+                M -20 -128 
+                L -20 189 
+                L -220 -228 
+                Z" 
+            />
+        </svg>
+    </div>
+
+    <div class="mt-12 text-center">
+        <h1 class="text-3xl font-black tracking-[0.3em] uppercase">ConVectorify</h1>
+        <p class="text-xs mt-2 opacity-50 tracking-widest">Código Monolítico - Cero Texturas - 100% SVG</p>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            if (body.classList.contains('bg-white')) {
+                // Cambiar a Dark Mode
+                body.classList.replace('bg-white', 'bg-[#0a0a0a]');
+                body.classList.replace('text-black', 'text-white');
+            } else {
+                // Cambiar a Light Mode
+                body.classList.replace('bg-[#0a0a0a]', 'bg-white');
+                body.classList.replace('text-white', 'text-black');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logo Recreation - Step 1: Hexagon</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #050505;
+            --accent-color: #ffffff;
+            --hex-size: 300px;
+            --font-main: 'Outfit', sans-serif;
+            --glow-color: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--accent-color);
+            font-family: var(--font-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .label {
+            font-weight: 300;
+            letter-spacing: 0.5em;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            opacity: 0.5;
+            animation: fadeIn 1.5s ease-out forwards;
+        }
+
+        .canvas {
+            width: var(--hex-size);
+            height: var(--hex-size);
+            position: relative;
+            filter: drop-shadow(0 0 30px var(--glow-color));
+            animation: float 6s ease-in-out infinite;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .hexagon {
+            fill: rgba(255, 255, 255, 0.02);
+            stroke: var(--accent-color);
+            stroke-width: 2.5;
+            stroke-dasharray: 2000;
+            stroke-dashoffset: 2000;
+            animation: drawHex 2.5s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+            stroke-linejoin: round;
+            stroke-linecap: round;
+        }
+
+        @keyframes drawHex {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 0.5; transform: translateY(0); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Ambient light effects */
+        .ambient-light {
+            position: absolute;
+            width: 140vw;
+            height: 140vh;
+            background: radial-gradient(circle at center, rgba(255,255,255,0.03) 0%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-light"></div>
+
+    <div class="container">
+        <span class="label">Paso 1: La Base Hexagonal</span>
+        <div class="canvas">
+            <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+                <!-- Pointy-top hexagon -->
+                <polygon class="hexagon" points="250,20 450,135 450,365 250,480 50,365 50,135" />
+            </svg>
+        </div>
+    </div>
+</body>
+</html>

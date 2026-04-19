@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vectorify | Código Definitivo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { transition: background-color 0.3s ease, color 0.3s ease; }
+        /* Sombra premium para presentación */
+        .logo-shadow { filter: drop-shadow(0 25px 30px rgba(0, 0, 0, 0.15)); }
+    </style>
+</head>
+<body class="bg-[#0a0a0a] text-white min-h-screen flex flex-col items-center justify-center font-sans">
+
+    <div class="absolute top-10">
+        <button onclick="document.body.classList.toggle('bg-[#0a0a0a]'); document.body.classList.toggle('bg-white'); document.body.classList.toggle('text-white'); document.body.classList.toggle('text-black');" class="px-6 py-2 text-xs font-bold tracking-widest uppercase border border-current rounded-full hover:opacity-50">
+            Cambiar Fondo (Test de Transparencia)
+        </button>
+    </div>
+
+    <div class="logo-shadow w-80 h-80 md:w-[32rem] md:h-[32rem]">
+        <svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" class="w-full h-full fill-current">
+            <defs>
+                <mask id="y-cutout">
+                    <rect width="1000" height="1000" fill="white" />
+                    <path d="M 500 850 L 500 540 L 367 300 M 500 540 L 633 300" stroke="black" stroke-width="35" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                </mask>
+            </defs>
+            
+            <polygon points="500,0 900,230 900,430 500,200 260,338 260,662 500,800 900,570 900,770 500,1000 100,770 100,230" />
+            
+            <polygon points="500,800 258,380 742,380" mask="url(#y-cutout)" />
+        </svg>
+    </div>
+
+    <div class="mt-16 text-center">
+        <h1 class="text-4xl font-black tracking-[0.3em]">VECTORIFY</h1>
+        <p class="text-xs mt-3 opacity-50 tracking-widest font-mono">RENDERIZADO MATEMÁTICO CORRECTO</p>
+    </div>
+
+</body>
+</html>

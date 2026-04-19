@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logo Component: Inverted Cube (Y-Lines)</title>
+    <style>
+        :root {
+            --bg-color: #0d0d0d;
+            --stroke-color: #ffffff;
+            --thickness-frame: 50;
+            --thickness-y: 15;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .canvas {
+            width: 500px;
+            height: 500px;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .hexagon-c {
+            fill: none;
+            stroke: var(--stroke-color);
+            stroke-width: var(--thickness-frame);
+            stroke-linejoin: miter;
+            stroke-linecap: butt;
+        }
+
+        .y-lines {
+            fill: none;
+            stroke: var(--stroke-color);
+            stroke-width: var(--thickness-y);
+            stroke-linejoin: round;
+            stroke-linecap: round;
+        }
+    </style>
+</head>
+<body>
+    <div class="canvas">
+        <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+            <!-- Hexagon C-Frame -->
+            <polyline class="hexagon-c" points="423,150 250,50 77,150 77,350 250,450 423,350" />
+            
+            <!-- Inverted Y Lines (Opposite Corners) -->
+            <!-- From Center (250, 250) to: 
+                 1. Bottom Center (250, 450)
+                 2. Top Left (77, 150)
+                 3. Top Right (423, 150)
+            -->
+            <g class="y-lines">
+                <line x1="250" y1="250" x2="250" y2="450" />
+                <line x1="250" y1="250" x2="77" y2="150" />
+                <line x1="250" y1="250" x2="423" y2="150" />
+            </g>
+        </svg>
+    </div>
+</body>
+</html>

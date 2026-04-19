@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logo Component: V-Shape</title>
+    <style>
+        :root {
+            --bg-color: #0d0d0d;
+            --stroke-color: #ffffff;
+            --thickness-v: 60;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .canvas {
+            width: 500px;
+            height: 500px;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .v-path {
+            fill: none;
+            stroke: var(--stroke-color);
+            stroke-width: var(--thickness-v);
+            stroke-linejoin: miter;
+            stroke-linecap: butt;
+        }
+    </style>
+</head>
+<body>
+    <div class="canvas">
+        <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+            <!-- 
+                V-Shape points:
+                1. Top Left:     130, 215
+                2. Bottom Center: 250, 450
+                3. Top Right:    370, 215
+            -->
+            <polyline class="v-path" points="130,215 250,450 370,215" />
+        </svg>
+    </div>
+</body>
+</html>

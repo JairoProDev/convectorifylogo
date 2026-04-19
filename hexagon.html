@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logo Component: Hexagon C-Frame</title>
+    <style>
+        :root {
+            --bg-color: #0d0d0d;
+            --stroke-color: #ffffff;
+            --thickness: 50; /* Base thickness for the logo frame */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .canvas {
+            width: 500px;
+            height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .hexagon-c {
+            fill: none;
+            stroke: var(--stroke-color);
+            stroke-width: var(--thickness);
+            stroke-linejoin: miter;
+            stroke-linecap: butt;
+        }
+    </style>
+</head>
+<body>
+    <div class="canvas">
+        <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+            <!-- 
+                Points for a 5-sided hexagon (C-Frame):
+                1. Top Right (start):  423, 150
+                2. Top Center:         250, 50
+                3. Top Left:           77, 150
+                4. Bottom Left:        77, 350
+                5. Bottom Center:      250, 450
+                6. Bottom Right (end): 423, 350
+            -->
+            <polyline class="hexagon-c" points="423,150 250,50 77,150 77,350 250,450 423,350" />
+        </svg>
+    </div>
+</body>
+</html>

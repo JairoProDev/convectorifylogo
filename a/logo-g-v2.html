@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Vectorify Logo V2.0 - Final</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { transition: background 0.4s; }
+        .logo-shadow { filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1)); }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col items-center justify-center p-10">
+
+    <div class="logo-shadow w-full max-w-2xl bg-white p-20 rounded-3xl border border-slate-200">
+        <svg viewBox="-500 -500 1000 1000" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto text-black fill-current">
+            <path d="
+                M 0 -500 
+                L 433 -250 
+                L 433 -100 
+                L 0 -350 
+                L -303 -175 
+                L -303 175 
+                L 0 350 
+                L 433 100 
+                L 433 250 
+                L 0 500 
+                L -433 250 
+                L -433 -250 
+                Z" 
+            />
+
+            <path fill-rule="evenodd" d="
+                /* Perímetro Exterior de la V (con Flechas) */
+                M 0 350 
+                L 340 -240 
+                L 240 -240 
+                L 180 -140 
+                L 0 -245 
+                L -180 -140 
+                L -240 -240 
+                L -340 -240 
+                Z
+
+                /* El Corte en 'Y' (Grosor Uniforme) */
+                /* Brazo vertical */
+                M -15 -140 L 15 -140 L 15 150 L -15 150 Z
+                /* Brazo derecho (30 grados) */
+                M 10 10 L 160 -80 L 175 -55 L 25 35 Z
+                /* Brazo izquierdo (150 grados) */
+                M -10 10 L -160 -80 L -175 -55 L -25 35 Z" 
+            />
+        </svg>
+    </div>
+
+    <div class="mt-10 text-center">
+        <h2 class="text-2xl font-black tracking-widest uppercase">Vectorify</h2>
+        <p class="text-slate-400 text-xs mt-2 font-mono uppercase tracking-tighter">
+            Pure Math . Vertical Terminals . Anchored Vertex . Y-Wireframe
+        </p>
+    </div>
+</body>
+</html>
