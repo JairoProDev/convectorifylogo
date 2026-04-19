@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vectorify V2 | 3D Isometric Engine</title>
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --logo-color: #0d0d0d;
+        }
+
+        body.dark-mode {
+            --bg-color: #0a0a0a;
+            --logo-color: #ffffff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-color);
+            transition: background 0.4s ease;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            overflow: hidden;
+        }
+
+        /* 
+         * ========================================================
+         * V2 PURE CSS GEOMETRÍA ISOMÉTRICA (100% CÓDIGO DOM)
+         * ========================================================
+         * Refactorización V2:
+         * 1. Centro Monolítico 3D (Se cerró la inmensa 'Y' y se trazó 
+         *    el alambre fino de un cubo isométrico con su diamante masivo).
+         * 2. Brazos C en Punta (Ahora los terminales derechos de la C apuntan
+         *    agudos respetando el slope isométrico de 0.5).
+         * 3. Barbas de la V (Extrusión afilada en los extremos de la V interna).
+         */
+
+        .vectorify-logo {
+            position: relative;
+            width: min(70vw, 70vh, 450px);
+            aspect-ratio: 1 / 1.1547; 
+            filter: drop-shadow(0 15px 25px rgba(0,0,0,0.15));
+        }
+
+        .shape-layer {
+            position: absolute;
+            inset: 0;
+            background: var(--logo-color);
+            transition: background 0.4s ease;
+        }
+
+        /* 1. OUTER LEFT 'C' ARC */
+        /* Exact isometrics: slopes must be ±0.5 */
+        .layer-c-left {
+            clip-path: polygon(
+                50% 0%, 
+                0% 25%, 
+                0% 75%, 
+                50% 100%, 
+                50% 84%, 
+                16% 67%, 
+                16% 33%, 
+                50% 16%
+            );
+        }
+
+        /* 2. OUTER TOP-RIGHT ARM (Sharp Pointer) */
+        .layer-c-top-right {
+            clip-path: polygon(
+                50% 0%, 
+                100% 25%, 
+                75% 37.5%, 
+                50% 25%,
+                50% 16%
+            );
+            /* Ajustando para dejar el hueco de la derecha mucho más exacto */
+            clip-path: polygon(
+                50% 0%, 
+                100% 25%, 
+                88% 31%, 
+                82% 28%,
+                50% 12%
+            );
+        }
+        
+        .layer-c-top-right-fixed {
+            /* Versión afinada del brazo superior: 
+               Baja por la derecha y termina cortado al interior isométricamente */
+            clip-path: polygon(
+                50% 0%,
+                100% 25%,
+                85% 32.5%,
+                75% 27.5%,
+                50% 16%
+            );
+        }
+
+        .layer-c-bottom-right-fixed {
+            /* Brazo inferior simétrico */
+            clip-path: polygon(
+                50% 100%,
+                100% 75%,
+                85% 67.5%,
+                75% 72.5%,
+                50% 84%
+            );
+        }
+
+        /* 3. INNER CUBE: DIAMOND TOP */
+        .layer-cube-diamond {
+            /* Masivo diamante central formando el techo del cubo */
+            clip-path: polygon(
+                50% 20%, 
+                66% 28%, 
+                50% 36%, 
+                34% 28%
+            );
+        }
+
+        /* 4. INNER CUBE: LEFT FACE / V WING */
+        .layer-cube-left-wing {
+            /* Extrusión de la cara izquierda del cubo formando la V y su 
+               "barba" afilada hacia la izquierda libre del borde */
+            clip-path: polygon(
+                20% 25%,     /* Barba puntiaguda superior izq */
+                28% 25%,     /* Cima plana */
+                33% 29.5%,   /* Esquina superior interior alineada con el diamante */
+                48.5% 37.25%,/* Descenso pegado al diamante (gap del wireframe de 1.5%) */
+                48.5% 80%,   /* Caída central del alambre vertical */
+                50% 83%,     /* Vértice inferior de la V central */
+                20% 25%      /* Retorno subiendo por la pared lateral escarpada */
+            );
+        }
+
+        /* 5. INNER CUBE: RIGHT FACE / V WING */
+        .layer-cube-right-wing {
+            /* Simétrico del ala izquierda */
+            clip-path: polygon(
+                80% 25%, 
+                72% 25%, 
+                67% 29.5%, 
+                51.5% 37.25%,
+                51.5% 80%, 
+                50% 83%, 
+                80% 25%
+            );
+        }
+
+        /* Utilities */
+        .controls { position: absolute; top: 2rem; display: flex; gap: 1rem; }
+        button {
+            background: transparent;
+            color: var(--logo-color);
+            border: 2px solid var(--logo-color);
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 12px; letter-spacing: 2px;
+            cursor: pointer; text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+        button:hover { opacity: 0.6; }
+        .label { position: absolute; bottom: 2rem; text-align: center; color: var(--logo-color); }
+        .label h1 { font-weight: 900; letter-spacing: 0.25em; font-size: 1.5rem; text-transform: uppercase; }
+        .label p { font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.6; margin-top: 5px; }
+
+    </style>
+</head>
+<body>
+    
+    <div class="controls">
+        <button onclick="document.body.classList.toggle('dark-mode')">Alternar Tema</button>
+    </div>
+
+    <!-- EL LOGO MAESTRO V2 EN DOM/CSS -->
+    <div class="vectorify-logo">
+        <div class="shape-layer layer-c-left"></div>
+        <div class="shape-layer layer-c-top-right-fixed"></div>
+        <div class="shape-layer layer-c-bottom-right-fixed"></div>
+        
+        <div class="shape-layer layer-cube-left-wing"></div>
+        <div class="shape-layer layer-cube-right-wing"></div>
+        <div class="shape-layer layer-cube-diamond"></div>
+    </div>
+
+    <div class="label">
+        <h1>Vectorify</h1>
+        <p>Versión V2 | 3D Monolítico Geométrico</p>
+    </div>
+
+</body>
+</html>
