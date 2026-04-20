@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vectorify | Advanced CAD Studio</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            background: #0f1115; color: #fff;
+            display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+            user-select: none;
+        }
+
+        /* --- TOOLBAR SUPERIOR --- */
+        #toolbar {
+            height: 60px; background: #1a1d24; border-bottom: 1px solid #333;
+            display: flex; align-items: center; padding: 0 20px; gap: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 100;
+        }
+        .btn {
+            background: #2a2e38; color: #fff; border: 1px solid #444; border-radius: 4px;
+            padding: 8px 12px; font-size: 11px; cursor: pointer; text-transform: uppercase;
+            font-weight: bold; transition: 0.2s;
+        }
+        .btn:hover { background: #00ffcc; color: #000; }
+        .btn.active { background: #ff0055; color: #fff; border-color: #ff0055; }
+        
+        .toolbar-group {
+            display: flex; align-items: center; gap: 10px; border-left: 1px solid #333; padding-left: 15px;
+        }
+        
+        select { background: #000; color: #00ffcc; border: 1px solid #444; padding: 6px; border-radius: 4px; }
+        
+        /* --- MAIN LAYOUT --- */
+        #workspace { display: flex; flex-grow: 1; height: calc(100vh - 60px); }
+
+        /* --- SIDEBAR --- */
+        #sidebar {
+            width: 350px; background: #1a1d24; border-right: 1px solid #333; display: flex; flex-direction: column;
+        }
+        #code-editor {
+            flex-grow: 1; width: 100%; background: #000; color: #00ffcc; font-family: monospace; font-size: 11px;
+            padding: 15px; border: none; resize: none; outline: none; white-space: pre;
+        }
+
+        /* --- CANVAS --- */
+        #blueprint-area {
+            flex-grow: 1; position: relative; background: #0a0c10; cursor: grab; overflow: hidden;
+        }
+        #blueprint-area:active { cursor: grabbing; }
+
+        svg { width: 100%; height: 100%; }
+
+        .grid-line { stroke: rgba(255, 255, 255, 0.05); stroke-width: 1; pointer-events: none; }
+        .grid-axis { stroke: rgba(0, 255, 204, 0.3); stroke-width: 1; pointer-events: none; }
+
+        .shape-path {
+            fill: rgba(0, 255, 204, 0.1); stroke: #00ffcc; stroke-width: 2.5; transition: fill 0.3s;
+            pointer-events: none;
+            mix-blend-mode: screen;
+        }
+
+        .vertex { fill: #ff0055; stroke: #fff; stroke-width: 2; cursor: pointer; transition: 0.1s; }
+        .vertex:hover { fill: #fff; stroke: #ff0055; stroke-width: 3; r: 8; }
+        .vertex.dragging { fill: #00ffcc; stroke: #fff; r: 10; }
+
+        .vertex-label { font-family: monospace; font-size: 12px; fill: #fff; font-weight: bold; pointer-events: none; text-shadow: 1px 1px 2px #000; }
+        .coord-label { font-family: monospace; font-size: 10px; fill: #00ffcc; pointer-events: none; }
+        .angle-text { font-family: monospace; font-size: 10px; fill: #ffd700; font-weight:bold; pointer-events: none; }
+
+        #hud {
+            position: absolute; bottom: 20px; right: 20px; background: rgba(0,0,0,0.8);
+            border: 1px solid #333; padding: 15px; border-radius: 8px; color: #fff; font-family: monospace; pointer-events: none;
+        }
+        #hud h3 { color: #ff0055; font-size: 13px; margin-bottom: 5px; }
+
+    </style>
+</head>
+<body>
+
+    <!-- TOOLBAR AVANZADA -->
+    <div id="toolbar">
+        <div>
+            <button class="btn" id="btn-export-svg">⬇ Descargar SVG</button>
+            <button class="btn" id="btn-export-json">💾 Descargar Data</button>
+        </div>
+        
+        <div class="toolbar-group">
+            <button class="btn active" id="btn-toggle-labels">📝 Etiquetas</button>
+            <button class="btn" id="btn-snap-grid">🧲 Snap a Cuadrícula</button>
+        </div>
+
+        <div class="toolbar-group">
+            <button class="btn" id="btn-save-version">⭐ Guardar Versión</button>
+            <select id="version-select">
+                <option value="default">Estado Actual</option>
+            </select>
+        </div>
+
+        <div class="toolbar-group">
+            <span style="font-size: 11px; font-weight:bold; color: #aaa;">Reference Image Slider:</span>
+            <input type="range" id="ref-opacity" min="0" max="1" step="0.1" value="0.2">
+        </div>
+    </div>
+
+    <div id="workspace">
+        <div id="sidebar">
+            <div style="padding: 10px; background: #232730; font-size: 11px; color:#aaa; border-bottom:1px solid #333;">
+                <b>JSON Editor:</b> Actualiza automáticamente o pega tu código aquí y deselecciona la caja para renderizar.
+            </div>
+            <textarea id="code-editor" spellcheck="false"></textarea>
+        </div>
+
+        <div id="blueprint-area">
+            <svg id="blueprint-svg" viewBox="-500 -500 1000 1000">
+                <!-- Imagen de referencia original para que sirva de calco -->
+                <image id="ref-image" href="vectorify logo.svg" x="-400" y="-400" width="800" height="800" opacity="0.2" preserveAspectRatio="xMidYMid meet" pointer-events="none"></image>
+                
+                <g id="grid-group"></g>
+                <g id="shapes-group"></g>
+                <g id="angles-group"></g>
+                <g id="vertices-group"></g>
+            </svg>
+            
+            <div id="hud">
+                <h3>CAD Studio Activo</h3>
+                <div id="hud-info">Rueda: Zoom | Click medio: Pan</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- ESTADO GLOBAL ---
+        let currentGeometry = {
+            points: {
+                C_Top: [0, -380], C_TR_Out: [329, -190], C_TR_TipCut: [329, -50], C_TR_InCut: [230, 7],
+                C_TR_In: [230, -133], C_Top_In: [0, -266], C_TL_In: [-230, -133], C_BL_In: [-230, 133],
+                C_Bot_In: [0, 266], C_BR_In: [230, 133], C_BR_InCut: [230, -7], C_BR_TipCut: [329, 50],
+                C_BR_Out: [329, 190], C_Bot: [0, 380], C_BL_Out: [-329, 190], C_TL_Out: [-329, -190],
+                D_Top: [0, -90], D_Right: [100, -32], D_Bot: [0, 25], D_Left: [-100, -32],
+                VL_TopOuter: [-200, -110], VL_TopInner: [-130, -110], VL_InnerCubeJunction: [-20, 36],
+                VL_CubeStemBottom: [-20, 220], VL_BotVertex: [0, 235], VL_OuterSlant: [-100, 60],
+                VR_TopInner: [130, -110], VR_TopOuter: [200, -110], VR_OuterSlant: [100, 60],
+                VR_BotVertex: [0, 235], VR_CubeStemBottom: [20, 220], VR_InnerCubeJunction: [20, 36]
+            },
+            shapes: [
+                { name: "Outer_C", vertices: ["C_Top", "C_TR_Out", "C_TR_TipCut", "C_TR_InCut", "C_TR_In", "C_Top_In", "C_TL_In", "C_BL_In", "C_Bot_In", "C_BR_In", "C_BR_InCut", "C_BR_TipCut", "C_BR_Out", "C_Bot", "C_BL_Out", "C_TL_Out"] },
+                { name: "Cube_Diamond", vertices: ["D_Top", "D_Right", "D_Bot", "D_Left"] },
+                { name: "V_Left_Wing", vertices: ["VL_TopOuter", "VL_TopInner", "VL_InnerCubeJunction", "VL_CubeStemBottom", "VL_BotVertex", "VL_OuterSlant"] },
+                { name: "V_Right_Wing", vertices: ["VR_TopInner", "VR_TopOuter", "VR_OuterSlant", "VR_BotVertex", "VR_CubeStemBottom", "VR_InnerCubeJunction"] }
+            ]
+        };
+
+        const svg = document.getElementById('blueprint-svg');
+        const editor = document.getElementById('code-editor');
+        const hudInfo = document.getElementById('hud-info');
+        
+        let settings = { showLabels: true, snapToGrid: false, gridSize: 10 };
+        let svgViewBox = { x: -500, y: -500, w: 1000, h: 1000 };
+        let versions = [];
+
+        // --- SISTEMA DE DIBUJO ---
+        function drawGrid() {
+            const gridGroup = document.getElementById('grid-group');
+            gridGroup.innerHTML = '';
+            // Axes
+            gridGroup.innerHTML += `<line x1="-2000" y1="0" x2="2000" y2="0" class="grid-axis"/>`;
+            gridGroup.innerHTML += `<line x1="0" y1="-2000" x2="0" y2="2000" class="grid-axis"/>`;
+            // Grid
+            for(let i = -2000; i <= 2000; i += 50) {
+                if(i === 0) continue;
+                gridGroup.innerHTML += `<line x1="-2000" y1="${i}" x2="2000" y2="${i}" class="grid-line"/>`;
+                gridGroup.innerHTML += `<line x1="${i}" y1="-2000" x2="${i}" y2="2000" class="grid-line"/>`;
+            }
+        }
+
+        function getAngleBetweenThreePoints(p1, p2, p3) {
+            const a = Math.hypot(p3[0] - p2[0], p3[1] - p2[1]);
+            const b = Math.hypot(p1[0] - p2[0], p1[1] - p2[1]);
+            const c = Math.hypot(p3[0] - p1[0], p3[1] - p1[1]);
+            let angleRad = Math.acos((a*a + b*b - c*c) / (2 * a * b));
+            if (isNaN(angleRad)) angleRad = 0;
+            return Math.round(angleRad * 180 / Math.PI);
+        }
+
+        function updateViewBox() {
+            svg.setAttribute('viewBox', `${svgViewBox.x} ${svgViewBox.y} ${svgViewBox.w} ${svgViewBox.h}`);
+        }
+
+        function renderEngine() {
+            const shapesGroup = document.getElementById('shapes-group');
+            const verticesGroup = document.getElementById('vertices-group');
+            const anglesGroup = document.getElementById('angles-group');
+            
+            shapesGroup.innerHTML = '';
+            verticesGroup.innerHTML = '';
+            anglesGroup.innerHTML = '';
+            
+            const points = currentGeometry.points;
+
+            currentGeometry.shapes.forEach(shape => {
+                const pathCoords = shape.vertices.map(vName => points[vName].join(',')).join(' ');
+                shapesGroup.innerHTML += `<polygon points="${pathCoords}" class="shape-path" />`;
+                
+                if (settings.showLabels) {
+                    for(let i = 0; i < shape.vertices.length; i++) {
+                        const prev = shape.vertices[(i === 0) ? shape.vertices.length - 1 : i - 1];
+                        const curr = shape.vertices[i];
+                        const next = shape.vertices[(i + 1) % shape.vertices.length];
+                        const angle = getAngleBetweenThreePoints(points[prev], points[curr], points[next]);
+                        anglesGroup.innerHTML += `<text x="${points[curr][0]}" y="${points[curr][1] + 25}" class="angle-text" text-anchor="middle">${angle}°</text>`;
+                    }
+                }
+            });
+
+            const vertexRadius = svgViewBox.w / 200; // Escala radius con zoom
+            const fs = svgViewBox.w / 150; // Escala fuente
+            
+            Object.keys(points).forEach(pName => {
+                const [x, y] = points[pName];
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', x);
+                circle.setAttribute('cy', y);
+                circle.setAttribute('r', draggingVertex === pName ? vertexRadius*2 : vertexRadius);
+                circle.setAttribute('class', `vertex ${draggingVertex === pName ? 'dragging' : ''}`);
+                circle.setAttribute('data-name', pName);
+                
+                if (settings.showLabels) {
+                    verticesGroup.innerHTML += `
+                        <text x="${x + vertexRadius*2}" y="${y - vertexRadius}" class="vertex-label" style="font-size:${fs}px">${pName}</text>
+                        <text x="${x + vertexRadius*2}" y="${y + vertexRadius*2}" class="coord-label" style="font-size:${fs*0.8}px">[${Math.round(x)}, ${Math.round(y)}]</text>`;
+                }
+                verticesGroup.appendChild(circle);
+            });
+
+            // Update JSON Si no está enfocado para que el usuario pueda escribir
+            if(document.activeElement !== editor) {
+                editor.value = JSON.stringify(currentGeometry, null, 4);
+            }
+        }
+
+        // --- INTERACCIÓN EDITOR JSON ---
+        editor.addEventListener('blur', () => {
+            try {
+                currentGeometry = JSON.parse(editor.value);
+                renderEngine();
+            } catch(e) { /* Ignore parsing errors while typing */ }
+        });
+
+        // --- SISTEMA DE DRAG, PAN y ZOOM ---
+        let draggingVertex = null;
+        let isPanning = false;
+        let startPan = { x: 0, y: 0 };
+        let startViewBox = { ...svgViewBox };
+
+        function getMousePositionSVG(evt) {
+            const CTM = svg.getScreenCTM();
+            return { x: (evt.clientX - CTM.e) / CTM.a, y: (evt.clientY - CTM.f) / CTM.d };
+        }
+
+        svg.addEventListener('mousedown', (e) => {
+            if (e.button === 1 || e.buttons === 4 || e.altKey) {
+                // Pan action (Middle click or Alt+Click)
+                isPanning = true;
+                startPan = { x: e.clientX, y: e.clientY };
+                startViewBox = { ...svgViewBox };
+                return;
+            }
+            if (e.target.classList.contains('vertex')) {
+                draggingVertex = e.target.getAttribute('data-name');
+            }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (isPanning) {
+                const dx = (e.clientX - startPan.x) * (svgViewBox.w / svg.clientWidth);
+                const dy = (e.clientY - startPan.y) * (svgViewBox.h / svg.clientHeight);
+                svgViewBox.x = startViewBox.x - dx;
+                svgViewBox.y = startViewBox.y - dy;
+                updateViewBox();
+                return;
+            }
+            if (draggingVertex) {
+                const pos = getMousePositionSVG(e);
+                let newX = pos.x;
+                let newY = pos.y;
+
+                if (settings.snapToGrid) {
+                    newX = Math.round(newX / settings.gridSize) * settings.gridSize;
+                    newY = Math.round(newY / settings.gridSize) * settings.gridSize;
+                } else {
+                    newX = Math.round(newX);
+                    newY = Math.round(newY);
+                }
+
+                // Snap Magnético a otros puntos (< 15 px en el grid actual)
+                let snapped = false;
+                const snapDis = svgViewBox.w / 60; // Auto escalea con el zoom
+                Object.keys(currentGeometry.points).forEach(pName => {
+                    if (pName !== draggingVertex) {
+                        const px = currentGeometry.points[pName][0];
+                        const py = currentGeometry.points[pName][1];
+                        if (Math.hypot(newX - px, newY - py) < snapDis) {
+                            newX = px; newY = py; snapped = true;
+                        }
+                    }
+                });
+
+                currentGeometry.points[draggingVertex] = [newX, newY];
+                hudInfo.innerHTML = snapped ? `<span style="color:#00ffcc">FUSIÓN MAGNÉTICA: [${newX}, ${newY}]</span>` : `[X: ${newX}, Y: ${newY}]`;
+                renderEngine();
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            draggingVertex = null;
+            isPanning = false;
+            renderEngine();
+        });
+
+        svg.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const pos = getMousePositionSVG(e);
+            const zoomFactor = e.deltaY > 0 ? 1.1 : 0.9;
+            // Zoom toward mouse
+            svgViewBox.x = pos.x - (pos.x - svgViewBox.x) * zoomFactor;
+            svgViewBox.y = pos.y - (pos.y - svgViewBox.y) * zoomFactor;
+            svgViewBox.w *= zoomFactor;
+            svgViewBox.h *= zoomFactor;
+            updateViewBox();
+            renderEngine(); // para ajustar tamaño de textos
+        });
+
+        // --- FUNCIONALIDADES TOOLBAR ---
+        document.getElementById('btn-toggle-labels').addEventListener('click', (e) => {
+            settings.showLabels = !settings.showLabels;
+            e.target.classList.toggle('active');
+            renderEngine();
+        });
+
+        document.getElementById('btn-snap-grid').addEventListener('click', (e) => {
+            settings.snapToGrid = !settings.snapToGrid;
+            e.target.classList.toggle('active');
+        });
+
+        document.getElementById('ref-opacity').addEventListener('input', (e) => {
+            document.getElementById('ref-image').setAttribute('opacity', e.target.value);
+        });
+
+        document.getElementById('btn-save-version').addEventListener('click', () => {
+            const id = versions.length + 1;
+            versions.push(JSON.parse(JSON.stringify(currentGeometry)));
+            const sel = document.getElementById('version-select');
+            sel.innerHTML += `<option value="${id - 1}">Versión ${id}</option>`;
+            sel.value = id - 1;
+            alert('Versión Guardada en Memoria (Historial)');
+        });
+
+        document.getElementById('version-select').addEventListener('change', (e) => {
+            if(e.target.value !== "default" && versions[e.target.value]) {
+                currentGeometry = JSON.parse(JSON.stringify(versions[e.target.value]));
+                renderEngine();
+            }
+        });
+
+        document.getElementById('btn-export-svg').addEventListener('click', () => {
+            // Generar un SVG limpio puro
+            let cleanSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${svgViewBox.x} ${svgViewBox.y} ${svgViewBox.w} ${svgViewBox.h}">`;
+            currentGeometry.shapes.forEach(shape => {
+                const pathCoords = shape.vertices.map(vName => currentGeometry.points[vName].join(',')).join(' ');
+                cleanSVG += `\n  <polygon points="${pathCoords}" fill="#0d0d0d"/>`;
+            });
+            cleanSVG += "\n</svg>";
+            
+            const blob = new Blob([cleanSVG], {type: "image/svg+xml"});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = "vectorify-custom-export.svg";
+            a.click();
+        });
+
+        document.getElementById('btn-export-json').addEventListener('click', () => {
+            const blob = new Blob([JSON.stringify(currentGeometry, null, 2)], {type: "application/json"});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = "vectorify-data.json";
+            a.click();
+        });
+
+        // INIT
+        updateViewBox();
+        drawGrid();
+        renderEngine();
+    </script>
+</body>
+</html>

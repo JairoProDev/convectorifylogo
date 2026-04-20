@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vectorify Blueprint 2.0 | Editor Visual Interactivo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            background: #0f1115; 
+            color: #fff;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none; /* Previene selección de texto al arrastrar */
+        }
+
+        #sidebar {
+            width: 400px;
+            background: #1a1d24;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #333;
+            z-index: 10;
+        }
+
+        .header {
+            padding: 20px;
+            background: #232730;
+            border-bottom: 1px solid #333;
+        }
+        
+        .header h1 { font-size: 1.2rem; color: #ff0055; margin-bottom: 5px; }
+        .header p { font-size: 0.8rem; color: #aaa; line-height: 1.4; }
+
+        #editor-container {
+            flex-grow: 1;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #code-editor {
+            width: 100%;
+            flex-grow: 1;
+            background: #000;
+            color: #00ffcc;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 10px;
+            resize: none;
+            outline: none;
+        }
+
+        /* Lienzo de Blueprint */
+        #blueprint-area {
+            flex-grow: 1;
+            position: relative;
+            background: radial-gradient(circle at center, #1a1d24 0%, #0a0c10 100%);
+            cursor: move;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .grid-line { stroke: rgba(255, 255, 255, 0.05); stroke-width: 1; pointer-events: none;}
+        .grid-axis { stroke: rgba(0, 255, 204, 0.2); stroke-width: 1; pointer-events: none;}
+
+        .shape-path {
+            fill: rgba(0, 255, 204, 0.05);
+            stroke: #00ffcc;
+            stroke-width: 2.5;
+            transition: fill 0.3s;
+            pointer-events: none;
+        }
+
+        .vertex {
+            fill: #ff0055;
+            stroke: #fff;
+            stroke-width: 2;
+            cursor: pointer;
+        }
+        .vertex:hover { fill: #fff; stroke: #ff0055; stroke-width: 3; r: 8; }
+        .vertex.dragging { fill: #00ffcc; stroke: #fff; r: 10; }
+
+        .vertex-label {
+            font-family: monospace;
+            font-size: 12px;
+            fill: #fff;
+            font-weight: bold;
+            pointer-events: none;
+            text-shadow: 1px 1px 2px #000;
+        }
+        .coord-label {
+            font-family: monospace;
+            font-size: 10px;
+            fill: #00ffcc;
+            pointer-events: none;
+        }
+
+        .angle-text { font-family: monospace; font-size: 10px; fill: #ffd700; pointer-events: none; font-weight:bold; }
+
+        #hud {
+            position: absolute;
+            top: 20px; right: 20px;
+            background: rgba(0,0,0,0.8);
+            border: 1px solid #333;
+            padding: 15px;
+            border-radius: 8px;
+            color: #fff;
+            font-family: monospace;
+            pointer-events: none;
+        }
+        #hud-title { color: #ff0055; font-weight: bold; margin-bottom: 5px; }
+
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <div class="header">
+            <h1>Visual Drag Engine</h1>
+            <p>1. <b>Arrastra los círculos</b> en el lienzo para modificar la geometría visualmente.<br>
+            2. Si acercas mucho un punto a otro, <b>se fusionarán magnéticamente</b> (Snapping).<br>
+            3. El código JSON se actualizará automáticamente abajo.</p>
+        </div>
+        <div id="editor-container">
+            <textarea id="code-editor" spellcheck="false" readonly></textarea>
+        </div>
+    </div>
+
+    <div id="blueprint-area">
+        <svg id="blueprint-svg" viewBox="-500 -500 1000 1000">
+            <g id="grid-group"></g>
+            <g id="shapes-group"></g>
+            <g id="angles-group"></g>
+            <g id="vertices-group"></g>
+        </svg>
+        
+        <div id="hud">
+            <div id="hud-title">Drag & Drop Activo</div>
+            <div id="hud-info">Interactúa con el gráfico...</div>
+        </div>
+    </div>
+
+    <script>
+        let currentGeometry = {
+            points: {
+                C_Top: [0, -380], C_TR_Out: [329, -190], C_TR_TipCut: [329, -50], C_TR_InCut: [230, 7],
+                C_TR_In: [230, -133], C_Top_In: [0, -266], C_TL_In: [-230, -133], C_BL_In: [-230, 133],
+                C_Bot_In: [0, 266], C_BR_In: [230, 133], C_BR_InCut: [230, -7], C_BR_TipCut: [329, 50],
+                C_BR_Out: [329, 190], C_Bot: [0, 380], C_BL_Out: [-329, 190], C_TL_Out: [-329, -190],
+
+                D_Top: [0, -90], D_Right: [100, -32], D_Bot: [0, 25], D_Left: [-100, -32],
+
+                VL_TopOuter: [-200, -110], VL_TopInner: [-130, -110], VL_InnerCubeJunction: [-20, 36],
+                VL_CubeStemBottom: [-20, 220], VL_BotVertex: [0, 235], VL_OuterSlant: [-100, 60],
+
+                VR_TopInner: [130, -110], VR_TopOuter: [200, -110], VR_OuterSlant: [100, 60],
+                VR_BotVertex: [0, 235], VR_CubeStemBottom: [20, 220], VR_InnerCubeJunction: [20, 36]
+            },
+            shapes: [
+                { name: "Outer_C", vertices: ["C_Top", "C_TR_Out", "C_TR_TipCut", "C_TR_InCut", "C_TR_In", "C_Top_In", "C_TL_In", "C_BL_In", "C_Bot_In", "C_BR_In", "C_BR_InCut", "C_BR_TipCut", "C_BR_Out", "C_Bot", "C_BL_Out", "C_TL_Out"] },
+                { name: "Cube_Diamond", vertices: ["D_Top", "D_Right", "D_Bot", "D_Left"] },
+                { name: "V_Left_Wing", vertices: ["VL_TopOuter", "VL_TopInner", "VL_InnerCubeJunction", "VL_CubeStemBottom", "VL_BotVertex", "VL_OuterSlant"] },
+                { name: "V_Right_Wing", vertices: ["VR_TopInner", "VR_TopOuter", "VR_OuterSlant", "VR_BotVertex", "VR_CubeStemBottom", "VR_InnerCubeJunction"] }
+            ]
+        };
+
+        const editor = document.getElementById('code-editor');
+        const svg = document.getElementById('blueprint-svg');
+        const hudInfo = document.getElementById('hud-info');
+
+        let draggingVertex = null;
+
+        function drawGrid() {
+            const gridGroup = document.getElementById('grid-group');
+            gridGroup.innerHTML = '';
+            gridGroup.innerHTML += `<line x1="-500" y1="0" x2="500" y2="0" class="grid-axis"/>`;
+            gridGroup.innerHTML += `<line x1="0" y1="-500" x2="0" y2="500" class="grid-axis"/>`;
+            for(let i = -500; i <= 500; i += 50) {
+                if(i === 0) continue;
+                gridGroup.innerHTML += `<line x1="-500" y1="${i}" x2="500" y2="${i}" class="grid-line"/>`;
+                gridGroup.innerHTML += `<line x1="${i}" y1="-500" x2="${i}" y2="500" class="grid-line"/>`;
+            }
+        }
+
+        function getAngleBetweenThreePoints(p1, p2, p3) {
+            const a = Math.hypot(p3[0] - p2[0], p3[1] - p2[1]);
+            const b = Math.hypot(p1[0] - p2[0], p1[1] - p2[1]);
+            const c = Math.hypot(p3[0] - p1[0], p3[1] - p1[1]);
+            let angleRad = Math.acos((a*a + b*b - c*c) / (2 * a * b));
+            if (isNaN(angleRad)) angleRad = 0;
+            return Math.round(angleRad * 180 / Math.PI);
+        }
+
+        // Renderizado Dinámico que se llamará incluso al arrastrar
+        function renderEngine() {
+            const shapesGroup = document.getElementById('shapes-group');
+            const verticesGroup = document.getElementById('vertices-group');
+            const anglesGroup = document.getElementById('angles-group');
+            
+            shapesGroup.innerHTML = '';
+            verticesGroup.innerHTML = '';
+            anglesGroup.innerHTML = '';
+            
+            const points = currentGeometry.points;
+
+            // Polígonos y Ángulos
+            currentGeometry.shapes.forEach(shape => {
+                const pathCoords = shape.vertices.map(vName => points[vName].join(',')).join(' ');
+                shapesGroup.innerHTML += `<polygon points="${pathCoords}" class="shape-path" />`;
+                
+                for(let i = 0; i < shape.vertices.length; i++) {
+                    const prev = shape.vertices[(i === 0) ? shape.vertices.length - 1 : i - 1];
+                    const curr = shape.vertices[i];
+                    const next = shape.vertices[(i + 1) % shape.vertices.length];
+                    const angle = getAngleBetweenThreePoints(points[prev], points[curr], points[next]);
+                    
+                    anglesGroup.innerHTML += `
+                        <text x="${points[curr][0]}" y="${points[curr][1] + 25}" class="angle-text" text-anchor="middle">${angle}°</text>
+                    `;
+                }
+            });
+
+            // Vértices Draggables
+            Object.keys(points).forEach(pName => {
+                const [x, y] = points[pName];
+                
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', x);
+                circle.setAttribute('cy', y);
+                circle.setAttribute('r', draggingVertex === pName ? 10 : 5);
+                circle.setAttribute('class', `vertex ${draggingVertex === pName ? 'dragging' : ''}`);
+                circle.setAttribute('data-name', pName);
+                
+                // Textos
+                const lbl = `<text x="${x + 10}" y="${y - 5}" class="vertex-label">${pName}</text>
+                             <text x="${x + 10}" y="${y + 10}" class="coord-label">[${Math.round(x)}, ${Math.round(y)}]</text>`;
+                verticesGroup.innerHTML += lbl;
+                verticesGroup.appendChild(circle);
+            });
+
+            editor.value = JSON.stringify(currentGeometry, null, 4);
+        }
+
+        // --- SISTEMA DE DRAG AND DROP CON SNAPPING ---
+
+        function getMousePositionSVG(evt) {
+            const CTM = svg.getScreenCTM();
+            return {
+                x: (evt.clientX - CTM.e) / CTM.a,
+                y: (evt.clientY - CTM.f) / CTM.d
+            };
+        }
+
+        svg.addEventListener('mousedown', (e) => {
+            if (e.target.classList.contains('vertex')) {
+                draggingVertex = e.target.getAttribute('data-name');
+                hudInfo.innerHTML = `Arrastrando: <span style="color:#00ffcc">${draggingVertex}</span>`;
+            }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (draggingVertex) {
+                const pos = getMousePositionSVG(e);
+                let newX = Math.round(pos.x);
+                let newY = Math.round(pos.y);
+
+                // Función de Fusión Magnética (Snap to other points)
+                let snapped = false;
+                Object.keys(currentGeometry.points).forEach(pName => {
+                    if (pName !== draggingVertex) {
+                        const px = currentGeometry.points[pName][0];
+                        const py = currentGeometry.points[pName][1];
+                        // Distancia magnética de 15 unidades SVG
+                        if (Math.hypot(newX - px, newY - py) < 15) {
+                            newX = px;
+                            newY = py;
+                            snapped = true;
+                        }
+                    }
+                });
+
+                if (snapped) {
+                    hudInfo.innerHTML = `FUSIONADO con otro punto! [${newX}, ${newY}]`;
+                } else {
+                    hudInfo.innerHTML = `Arrastrando a: [${newX}, ${newY}]`;
+                }
+
+                // Asignar nuevas coordenadas
+                currentGeometry.points[draggingVertex] = [newX, newY];
+                renderEngine(); // Re-render de alto rendimiento (SVG lo aguanta nativamente)
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (draggingVertex) {
+                draggingVertex = null;
+                hudInfo.innerHTML = "Punto liberado. Pasa el mouse sobre otro.";
+                renderEngine(); // quitar clase 'dragging'
+            }
+        });
+
+        // Init
+        drawGrid();
+        renderEngine();
+    </script>
+</body>
+</html>
