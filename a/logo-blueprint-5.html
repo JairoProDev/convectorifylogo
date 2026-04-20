@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vectorify | Advanced CAD Studio V5</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            background: #0f1115; color: #fff;
+            display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+            user-select: none;
+        }
+
+        /* --- TOOLBAR SUPERIOR --- */
+        #toolbar {
+            height: 60px; background: #1a1d24; border-bottom: 1px solid #333;
+            display: flex; align-items: center; padding: 0 20px; gap: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 100;
+        }
+        .btn {
+            background: #2a2e38; color: #fff; border: 1px solid #444; border-radius: 4px;
+            padding: 8px 12px; font-size: 11px; cursor: pointer; text-transform: uppercase;
+            font-weight: bold; transition: 0.2s;
+        }
+        .btn:hover { background: #00ffcc; color: #000; }
+        .btn.active { background: #ff0055; color: #fff; border-color: #ff0055; }
+        .btn.accent { background: #00ffcc; color: #000; border-color: #00ffcc; }
+        
+        .toolbar-group {
+            display: flex; align-items: center; gap: 10px; border-left: 1px solid #333; padding-left: 15px;
+        }
+        
+        /* --- MAIN LAYOUT --- */
+        #workspace { display: flex; flex-grow: 1; height: calc(100vh - 60px); }
+
+        /* --- RIGHT SIDEBAR (NUEVO V5) --- */
+        #sidebar {
+            width: 320px; background: #15181e; border-right: 1px solid #333; display: flex; flex-direction: column;
+            overflow-y: auto;
+        }
+
+        /* TABS */
+        .tabs-header { display: flex; background: #0a0c10; }
+        .tab-btn {
+            flex: 1; padding: 12px; font-size: 11px; font-weight: bold; text-align: center; color: #888;
+            cursor: pointer; border-bottom: 2px solid transparent; text-transform: uppercase;
+        }
+        .tab-btn.active { color: #00ffcc; border-bottom: 2px solid #00ffcc; background: #15181e;}
+
+        .tab-content { display: none; flex-direction: column; flex-grow: 1; padding: 15px; }
+        .tab-content.active { display: flex; }
+
+        /* TAB: LAYERS */
+        .layer-item {
+            background: #232730; border: 1px solid #333; padding: 10px; border-radius: 4px; margin-bottom: 10px;
+            display: flex; gap: 10px; align-items: center; cursor: pointer; transition:0.2s;
+        }
+        .layer-item.active { border-color: #ff0055; background: #2a1122; }
+        .layer-item input[type="text"] { flex-grow:1; background: transparent; border:none; color: #fff; font-size:12px; outline:none; }
+        .layer-item input[type="color"] { width: 25px; height: 25px; border: none; cursor: pointer; background: transparent; }
+        .layer-item button.del-btn { background: transparent; border:none; color:#ff0055; cursor:pointer; font-weight:bold; }
+        
+        /* TAB: CODE */
+        #code-editor, #export-editor {
+            width: 100%; flex-grow: 1; background: #000; color: #00ffcc; font-family: monospace; font-size: 11px;
+            padding: 15px; border: 1px solid #333; resize: none; outline: none; white-space: pre; border-radius:4px;
+        }
+
+        /* --- CANVAS --- */
+        #blueprint-area { flex-grow: 1; position: relative; background: #0a0c10; cursor: default; overflow: hidden; }
+        #blueprint-area.panning { cursor: grabbing; }
+        svg { width: 100%; height: 100%; }
+
+        .grid-line { stroke: rgba(255, 255, 255, 0.05); stroke-width: 1; pointer-events: none; }
+        .grid-axis { stroke: rgba(0, 255, 204, 0.3); stroke-width: 1; pointer-events: none; }
+
+        .shape-path { opacity: 0.1; stroke-width: 2.5; transition: opacity 0.3s, stroke-width 0.3s; pointer-events: none; mix-blend-mode: screen; }
+        .shape-layer-active { opacity: 0.25; stroke: #fff !important; stroke-width: 4 !important; }
+        .wireframe-mode .shape-path { fill: rgba(0,0,0,0) !important; stroke-width: 1.5; opacity: 0.5; }
+        .wireframe-mode .shape-layer-active { stroke-width: 2.5 !important; opacity: 1; }
+
+        .vertex { fill: #ff0055; stroke: #fff; stroke-width: 2; cursor: pointer; transition: 0.1s; }
+        .vertex:hover { fill: #fff; stroke: #ff0055; stroke-width: 3; r: 8; }
+        .vertex.dragging { fill: #00ffcc; stroke: #fff; r: 10; }
+
+        .vertex-label { font-family: monospace; font-size: 12px; fill: #fff; font-weight: bold; pointer-events: none; text-shadow: 1px 1px 2px #000; }
+        .coord-label { font-family: monospace; font-size: 10px; fill: #00ffcc; pointer-events: none; }
+        .angle-text { font-family: monospace; font-size: 10px; fill: #ffd700; font-weight:bold; pointer-events: none; }
+
+        #hud { position: absolute; bottom: 20px; right: 20px; background: rgba(0,0,0,0.8); border: 1px solid #333; padding: 15px; border-radius: 8px; color: #fff; font-family: monospace; pointer-events: none; }
+        #hud h3 { color: #ff0055; font-size: 13px; margin-bottom: 5px; }
+        .tips { font-size: 10px; color:#888; margin-top:5px; }
+
+    </style>
+</head>
+<body>
+
+    <!-- TOOLBAR V5 -->
+    <div id="toolbar">
+        <div>
+            <button class="btn" id="btn-export-svg" title="Descargar plano visual como SVG">⬇ EXPORT SVG</button>
+            <button class="btn" id="btn-export-json">💾 EXPORT JSON</button>
+        </div>
+        
+        <div class="toolbar-group">
+            <button class="btn" onclick="undo()" title="Deshacer (CTRL+Z)">↩ Undo</button>
+            <button class="btn" onclick="redo()" title="Rehacer (CTRL+Y)">↪ Redo</button>
+            <button class="btn accent" onclick="mirrorX()" title="Reflejar Horizontalmente el Polígono Activo">↔ Mirror X</button>
+        </div>
+
+        <div class="toolbar-group">
+            <button class="btn active" id="btn-toggle-labels">📝 Textos</button>
+            <button class="btn" id="btn-snap-grid">🧲 Snap 10px</button>
+            <button class="btn" id="btn-wireframe">🩻 Wireframe</button>
+        </div>
+
+        <div class="toolbar-group">
+            <input type="file" id="upload-ref" accept="image/*" style="display:none">
+            <button class="btn" onclick="document.getElementById('upload-ref').click()" title="Usa tu foto de referencia">🖼️ Cargar Calco</button>
+            <input type="range" id="ref-opacity" min="0" max="1" step="0.1" value="0.2" style="width:70px;">
+        </div>
+    </div>
+
+    <div id="workspace">
+        
+        <!-- SIDEBAR DE PANELES MULTIPLES -->
+        <div id="sidebar">
+            <div class="tabs-header">
+                <div class="tab-btn active" onclick="openTab('tab-layers', this)">Capas</div>
+                <div class="tab-btn" onclick="openTab('tab-json', this)">JSON</div>
+                <div class="tab-btn" onclick="openTab('tab-css', this)">CodeGen</div>
+            </div>
+
+            <!-- CAPAS -->
+            <div id="tab-layers" class="tab-content active">
+                <div style="font-size:11px; color:#888; margin-bottom:15px;">
+                    Crea polígonos. <b>El "Doble Click" para crear nodos los inyectará en la Capa Activa.</b>
+                </div>
+                <div id="layers-container"></div>
+                <button class="btn" style="width:100%; margin-top:10px; background:#0a0c10" onclick="addShapeLayer()">+ CREAR POLÍGONO</button>
+            </div>
+
+            <!-- JSON RAW -->
+            <div id="tab-json" class="tab-content">
+                <textarea id="code-editor" spellcheck="false"></textarea>
+            </div>
+
+            <!-- CSS COMPILER -->
+            <div id="tab-css" class="tab-content">
+                <div style="font-size:11px; color:#00ffcc; margin-bottom:10px;">
+                    CSS Clip-Path puro generado de tus trazados para producción Frontend:
+                </div>
+                <textarea id="export-editor" spellcheck="false" readonly></textarea>
+                <button class="btn accent" style="width:100%; margin-top:10px;" onclick="copyCSS()">Copiar CSS al Portapapeles</button>
+            </div>
+        </div>
+
+        <!-- CANVAS -->
+        <div id="blueprint-area" class="">
+            <svg id="blueprint-svg" viewBox="-500 -500 1000 1000">
+                <image id="ref-image" href="vectorify logo.svg" x="-400" y="-400" width="800" height="800" opacity="0.2" preserveAspectRatio="xMidYMid meet" pointer-events="none"></image>
+                <g id="grid-group"></g>
+                <g id="shapes-group"></g>
+                <g id="angles-group"></g>
+                <g id="vertices-group"></g>
+            </svg>
+            
+            <div id="hud">
+                <h3>V-CAD Studio V5</h3>
+                <div id="hud-info">Listo.</div>
+                <div class="tips">SHIFT+Click Centro para Mover Mapa</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- ESTADO GLOBAL ---
+        let currentGeometry = {
+            points: {
+                C_Top: [0, -380], C_TR_Out: [329, -190], C_TR_TipCut: [329, -50], C_TR_InCut: [230, 7],
+                C_TR_In: [230, -133], C_Top_In: [0, -266], C_TL_In: [-230, -133], C_BL_In: [-230, 133],
+                C_Bot_In: [0, 266], C_BR_In: [230, 133], C_BR_InCut: [230, -7], C_BR_TipCut: [329, 50],
+                C_BR_Out: [329, 190], C_Bot: [0, 380], C_BL_Out: [-329, 190], C_TL_Out: [-329, -190],
+                D_Top: [0, -90], D_Right: [100, -32], D_Bot: [0, 25], D_Left: [-100, -32],
+                VL_TopOuter: [-200, -110], VL_TopInner: [-130, -110], VL_InnerCubeJunction: [-20, 36],
+                VL_CubeStemBottom: [-20, 220], VL_BotVertex: [0, 235], VL_OuterSlant: [-100, 60],
+                VR_TopInner: [130, -110], VR_TopOuter: [200, -110], VR_OuterSlant: [100, 60],
+                VR_BotVertex: [0, 235], VR_CubeStemBottom: [20, 220], VR_InnerCubeJunction: [20, 36]
+            },
+            shapes: [
+                { name: "Outer_C", color: "#00ffcc", vertices: ["C_Top", "C_TR_Out", "C_TR_TipCut", "C_TR_InCut", "C_TR_In", "C_Top_In", "C_TL_In", "C_BL_In", "C_Bot_In", "C_BR_In", "C_BR_InCut", "C_BR_TipCut", "C_BR_Out", "C_Bot", "C_BL_Out", "C_TL_Out"] },
+                { name: "Cube_Diamond", color: "#ff0055", vertices: ["D_Top", "D_Right", "D_Bot", "D_Left"] },
+                { name: "V_Left_Wing", color: "#ffd700", vertices: ["VL_TopOuter", "VL_TopInner", "VL_InnerCubeJunction", "VL_CubeStemBottom", "VL_BotVertex", "VL_OuterSlant"] },
+                { name: "V_Right_Wing", color: "#00ccaa", vertices: ["VR_TopInner", "VR_TopOuter", "VR_OuterSlant", "VR_BotVertex", "VR_CubeStemBottom", "VR_InnerCubeJunction"] }
+            ]
+        };
+
+        const svg = document.getElementById('blueprint-svg');
+        const editor = document.getElementById('code-editor');
+        const hudInfo = document.getElementById('hud-info');
+        
+        let settings = { showLabels: true, snapToGrid: false, wireframe: false, gridSize: 10 };
+        let svgViewBox = { x: -500, y: -500, w: 1000, h: 1000 };
+        let activeLayerIndex = 0; // Layer Manager state
+        
+        // --- HISTORY (UNDO/REDO) ---
+        let history = [JSON.stringify(currentGeometry)];
+        let historyIndex = 0;
+
+        function pushHistory() {
+            const state = JSON.stringify(currentGeometry);
+            if (state === history[historyIndex]) return;
+            history = history.slice(0, historyIndex + 1);
+            history.push(state);
+            historyIndex++;
+            updateUI();
+        }
+
+        function undo() {
+            if (historyIndex > 0) { historyIndex--; currentGeometry = JSON.parse(history[historyIndex]); hudInfo.innerHTML = "Undo ejecutado."; updateUI(); }
+        }
+        function redo() {
+            if (historyIndex < history.length - 1) { historyIndex++; currentGeometry = JSON.parse(history[historyIndex]); hudInfo.innerHTML = "Redo ejecutado."; updateUI(); }
+        }
+        window.addEventListener('keydown', (e) => { if (e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); } if (e.ctrlKey && e.key === 'y') { e.preventDefault(); redo(); } });
+
+        // --- SISTEMA DE DIBUJO ---
+        function drawGrid() {
+            const gridGroup = document.getElementById('grid-group');
+            gridGroup.innerHTML = '';
+            gridGroup.innerHTML += `<line x1="-2000" y1="0" x2="2000" y2="0" class="grid-axis"/>`;
+            gridGroup.innerHTML += `<line x1="0" y1="-2000" x2="0" y2="2000" class="grid-axis"/>`;
+            for(let i = -2000; i <= 2000; i += 50) {
+                if(i === 0) continue;
+                gridGroup.innerHTML += `<line x1="-2000" y1="${i}" x2="2000" y2="${i}" class="grid-line"/>`;
+                gridGroup.innerHTML += `<line x1="${i}" y1="-2000" x2="${i}" y2="2000" class="grid-line"/>`;
+            }
+        }
+
+        function getAngleBetweenThreePoints(p1, p2, p3) {
+            const a = Math.hypot(p3[0] - p2[0], p3[1] - p2[1]);
+            const b = Math.hypot(p1[0] - p2[0], p1[1] - p2[1]);
+            const c = Math.hypot(p3[0] - p1[0], p3[1] - p1[1]);
+            let angleRad = Math.acos((a*a + b*b - c*c) / (2 * a * b));
+            if (isNaN(angleRad)) angleRad = 0;
+            return Math.round(angleRad * 180 / Math.PI);
+        }
+
+        function updateViewBox() { svg.setAttribute('viewBox', `${svgViewBox.x} ${svgViewBox.y} ${svgViewBox.w} ${svgViewBox.h}`); }
+
+        function renderEngine() {
+            const shapesGroup = document.getElementById('shapes-group');
+            const verticesGroup = document.getElementById('vertices-group');
+            const anglesGroup = document.getElementById('angles-group');
+            
+            shapesGroup.innerHTML = ''; verticesGroup.innerHTML = ''; anglesGroup.innerHTML = '';
+            const points = currentGeometry.points;
+
+            currentGeometry.shapes.forEach((shape, idx) => {
+                const pathCoords = shape.vertices.map(v => points[v] ? points[v].join(',') : '').join(' ');
+                const isActive = (idx === activeLayerIndex) ? 'shape-layer-active' : '';
+                shapesGroup.innerHTML += `<polygon points="${pathCoords}" class="shape-path ${isActive}" fill="${shape.color || '#00ffcc'}" stroke="${shape.color || '#00ffcc'}"/>`;
+                
+                if (settings.showLabels && idx === activeLayerIndex) {
+                    for(let i = 0; i < shape.vertices.length; i++) {
+                        const prevObj = points[shape.vertices[(i === 0) ? shape.vertices.length - 1 : i - 1]];
+                        const currObj = points[shape.vertices[i]];
+                        const nextObj = points[shape.vertices[(i + 1) % shape.vertices.length]];
+                        
+                        if(prevObj && currObj && nextObj) {
+                            const angle = getAngleBetweenThreePoints(prevObj, currObj, nextObj);
+                            anglesGroup.innerHTML += `<text x="${currObj[0]}" y="${currObj[1] + 25}" class="angle-text" text-anchor="middle">${angle}°</text>`;
+                        }
+                    }
+                }
+            });
+
+            const vertexRadius = svgViewBox.w / 200; 
+            const fs = svgViewBox.w / 150; 
+            
+            Object.keys(points).forEach(pName => {
+                const [x, y] = points[pName];
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', x); circle.setAttribute('cy', y);
+                circle.setAttribute('r', draggingVertex === pName ? vertexRadius*2.5 : vertexRadius);
+                circle.setAttribute('class', `vertex ${draggingVertex === pName ? 'dragging' : ''}`);
+                circle.setAttribute('data-name', pName);
+                
+                if (settings.showLabels) {
+                    verticesGroup.innerHTML += `
+                        <text x="${x + vertexRadius*2}" y="${y - vertexRadius}" class="vertex-label" style="font-size:${fs}px">${pName}</text>
+                        <text x="${x + vertexRadius*2}" y="${y + vertexRadius*2}" class="coord-label" style="font-size:${fs*0.8}px">[${Math.round(x)}, ${Math.round(y)}]</text>`;
+                }
+                verticesGroup.appendChild(circle);
+            });
+            compileCSS(); // Actualiza generador
+        }
+
+        // --- LAYER TAB LOGIC ---
+        function openTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        function renderLayers() {
+            let container = document.getElementById('layers-container');
+            let html = '';
+            currentGeometry.shapes.forEach((s, idx) => {
+                html += `
+                <div class="layer-item ${idx === activeLayerIndex ? 'active' : ''}" onclick="selectLayer(${idx})">
+                    <div style="width:10px; height:10px; border-radius:50%; background:${s.color || '#00ffcc'}"></div>
+                    <input type="text" value="${s.name}" onchange="updateShapeName(${idx}, this.value)" onclick="event.stopPropagation()">
+                    <input type="color" value="${s.color || '#00ffcc'}" onchange="updateShapeColor(${idx}, this.value)" onclick="event.stopPropagation()">
+                    <button class="del-btn" onclick="event.stopPropagation(); deleteLayer(${idx})">❌</button>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function selectLayer(idx) { activeLayerIndex = idx; renderLayers(); renderEngine(); }
+        function updateShapeName(idx, val) { currentGeometry.shapes[idx].name = val; pushHistory(); }
+        function updateShapeColor(idx, val) { currentGeometry.shapes[idx].color = val; pushHistory(); }
+        function addShapeLayer() { currentGeometry.shapes.push({ name: "Nueva_Capa", color: "#ffffff", vertices: [] }); activeLayerIndex = currentGeometry.shapes.length - 1; pushHistory(); }
+        function deleteLayer(idx) { currentGeometry.shapes.splice(idx, 1); activeLayerIndex = 0; pushHistory(); }
+
+        // --- CODE COMPILER (NUEVO V5) ---
+        function compileCSS() {
+            let cssText = `/* Vectorify Pure CSS Engine - AUTO GENERATED */\n.vectorify-logo {\n  position: relative;\n  width: 500px;\n  aspect-ratio: 1/1;\n}\n`;
+            
+            // Formula isometría central: x/y maps from -500..500 to 0%..100%
+            currentGeometry.shapes.forEach(s => {
+                if(s.vertices.length < 3) return;
+                let pathStr = s.vertices.map(v => {
+                    let p = currentGeometry.points[v];
+                    if(!p) return '0% 0%';
+                    let px = ((p[0] + 500) / 10).toFixed(2);
+                    let py = ((p[1] + 500) / 10).toFixed(2);
+                    return `${px}% ${py}%`;
+                }).join(', ');
+                let cleanName = s.name.replace(/[^A-Za-z0-9]/g, '-').toLowerCase();
+                cssText += `\n.shape-${cleanName} {\n  position: absolute;\n  inset: 0;\n  clip-path: polygon(${pathStr});\n  background: ${s.color || '#00ffcc'};\n}`;
+            });
+            document.getElementById('export-editor').value = cssText;
+        }
+
+        function copyCSS() {
+            const txt = document.getElementById('export-editor');
+            txt.select(); document.execCommand('copy');
+            alert('¡Código CSS copiado a tu portada!');
+        }
+
+        // --- MIRROR X TOOL (NUEVO V5) ---
+        function mirrorX() {
+            if(activeLayerIndex >= 0 && currentGeometry.shapes[activeLayerIndex]) {
+                const shape = currentGeometry.shapes[activeLayerIndex];
+                shape.vertices.forEach(vName => {
+                    if(currentGeometry.points[vName]) {
+                        currentGeometry.points[vName][0] = currentGeometry.points[vName][0] * -1; // Invierte X
+                    }
+                });
+                pushHistory();
+                hudInfo.innerHTML = `<span style="color:#00ffcc">Espejo Horizontal aplicado a Capa ${shape.name}</span>`;
+            }
+        }
+
+        // --- FUNCIONES CORE ENGINE ---
+        function updateUI() {
+            renderLayers(); renderEngine();
+            if(document.activeElement !== editor) editor.value = JSON.stringify(currentGeometry, null, 4);
+        }
+
+        editor.addEventListener('blur', () => { try { currentGeometry = JSON.parse(editor.value); pushHistory(); } catch(e) {} });
+
+        let draggingVertex = null;
+        let isPanning = false; let startPan = { x: 0, y: 0 }; let startViewBox = { ...svgViewBox };
+        function getMousePositionSVG(evt) { const CTM = svg.getScreenCTM(); return { x: (evt.clientX - CTM.e) / CTM.a, y: (evt.clientY - CTM.f) / CTM.d }; }
+
+        svg.addEventListener('dblclick', (e) => {
+            if (e.target.classList.contains('vertex')) {
+                const pName = e.target.getAttribute('data-name');
+                delete currentGeometry.points[pName];
+                currentGeometry.shapes.forEach(shape => { shape.vertices = shape.vertices.filter(v => v !== pName); });
+                hudInfo.innerHTML = `<span style="color:#ff0055">Punto ELIMINADO: ${pName}</span>`;
+                pushHistory();
+            } else {
+                const pos = getMousePositionSVG(e);
+                let n = 1; while(currentGeometry.points[`N_${n}`]) n++;
+                const newName = `N_${n}`;
+                currentGeometry.points[newName] = [Math.round(pos.x), Math.round(pos.y)];
+                
+                if(currentGeometry.shapes[activeLayerIndex]) {
+                    currentGeometry.shapes[activeLayerIndex].vertices.push(newName);
+                    hudInfo.innerHTML = `<span style="color:#00ffcc">Punto ${newName} añadido a Capa ${currentGeometry.shapes[activeLayerIndex].name}</span>`;
+                } else {
+                    hudInfo.innerHTML = `<span style="color:#00ffcc">Punto libre creado: ${newName}</span>`;
+                }
+                pushHistory();
+            }
+        });
+
+        svg.addEventListener('mousedown', (e) => {
+            if (e.button === 1 || e.buttons === 4 || e.shiftKey) {
+                isPanning = true; document.getElementById('blueprint-area').classList.add('panning');
+                startPan = { x: e.clientX, y: e.clientY }; startViewBox = { ...svgViewBox };
+                return;
+            }
+            if (e.target.classList.contains('vertex')) draggingVertex = e.target.getAttribute('data-name');
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (isPanning) {
+                const dx = (e.clientX - startPan.x) * (svgViewBox.w / svg.clientWidth);
+                const dy = (e.clientY - startPan.y) * (svgViewBox.h / svg.clientHeight);
+                svgViewBox.x = startViewBox.x - dx; svgViewBox.y = startViewBox.y - dy;
+                updateViewBox(); return;
+            }
+            if (draggingVertex) {
+                const pos = getMousePositionSVG(e);
+                let newX = pos.x; let newY = pos.y;
+
+                if (settings.snapToGrid) { newX = Math.round(newX / settings.gridSize) * settings.gridSize; newY = Math.round(newY / settings.gridSize) * settings.gridSize; }
+                else { newX = Math.round(newX); newY = Math.round(newY); }
+
+                let snapped = false; const snapDis = svgViewBox.w / 60; 
+                Object.keys(currentGeometry.points).forEach(pName => {
+                    if (pName !== draggingVertex) {
+                        const px = currentGeometry.points[pName][0]; const py = currentGeometry.points[pName][1];
+                        if (Math.hypot(newX - px, newY - py) < snapDis) { newX = px; newY = py; snapped = true; }
+                    }
+                });
+
+                currentGeometry.points[draggingVertex] = [newX, newY];
+                hudInfo.innerHTML = snapped ? `<span style="color:#00ffcc">💥 SNAP [${newX}, ${newY}]</span>` : `[X: ${newX}, Y: ${newY}]`;
+                renderEngine(); // Fast drag render
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (draggingVertex) { draggingVertex = null; pushHistory(); } // Save state on release
+            if (isPanning) { isPanning = false; document.getElementById('blueprint-area').classList.remove('panning'); }
+        });
+
+        svg.addEventListener('wheel', (e) => {
+            e.preventDefault(); const pos = getMousePositionSVG(e);
+            const zoomFactor = e.deltaY > 0 ? 1.15 : 0.85;
+            svgViewBox.x = pos.x - (pos.x - svgViewBox.x) * zoomFactor; svgViewBox.y = pos.y - (pos.y - svgViewBox.y) * zoomFactor;
+            svgViewBox.w *= zoomFactor; svgViewBox.h *= zoomFactor;
+            updateViewBox(); renderEngine();
+        });
+
+        document.getElementById('btn-toggle-labels').addEventListener('click', (e) => { settings.showLabels = !settings.showLabels; e.target.classList.toggle('active'); renderEngine(); });
+        document.getElementById('btn-snap-grid').addEventListener('click', (e) => { settings.snapToGrid = !settings.snapToGrid; e.target.classList.toggle('active'); });
+        document.getElementById('btn-wireframe').addEventListener('click', (e) => {
+            settings.wireframe = !settings.wireframe; e.target.classList.toggle('active');
+            if(settings.wireframe) svg.classList.add('wireframe-mode'); else svg.classList.remove('wireframe-mode');
+        });
+        document.getElementById('ref-opacity').addEventListener('input', (e) => { document.getElementById('ref-image').setAttribute('opacity', e.target.value); });
+        document.getElementById('upload-ref').addEventListener('change', (e) => {
+            if(e.target.files && e.target.files[0]) {
+                const reader = new FileReader(); reader.onload = function(ev) { document.getElementById('ref-image').setAttribute('href', ev.target.result); }
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+        document.getElementById('btn-export-svg').addEventListener('click', () => {
+            let cleanSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${svgViewBox.x} ${svgViewBox.y} ${svgViewBox.w} ${svgViewBox.h}">\n`;
+            currentGeometry.shapes.forEach(shape => {
+                const pathCoords = shape.vertices.map(v => currentGeometry.points[v] ? currentGeometry.points[v].join(',') : '').join(' ');
+                cleanSVG += `  <polygon points="${pathCoords}" fill="${shape.color || '#0d0d0d'}"/>\n`;
+            });
+            cleanSVG += "</svg>";
+            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([cleanSVG], {type: "image/svg+xml"})); a.download = "vectorify-export.svg"; a.click();
+        });
+        document.getElementById('btn-export-json').addEventListener('click', () => {
+            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(currentGeometry, null, 2)], {type: "application/json"})); a.download = "vectorify-data.json"; a.click();
+        });
+
+        // INIT
+        updateViewBox(); drawGrid(); updateUI();
+    </script>
+</body>
+</html>
