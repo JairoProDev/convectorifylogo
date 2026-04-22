@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vectorify | OMEGA CAD Studio V8</title>
+    <style>
+        :root {
+            --bg-body: #0a0b0e; --bg-tool: #14171d; --bg-side: #111318;
+            --border-col: #222; --txt-main: #fff; --txt-dim: #777;
+            --accent: #ff0055; --accent-hover: #e0004a; --secondary: #00ffcc;
+            --grid-line: rgba(255, 255, 255, 0.04); --grid-axis: rgba(0, 255, 204, 0.15);
+            --canvas-bg: #07080a; --hud-bg: rgba(0,0,0,0.85); --marquee-bg: rgba(0, 255, 204, 0.1); --marquee-border: #00ffcc;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-body); color: var(--txt-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; user-select: none; }
+
+        /* TOOLBAR */
+        #toolbar { height: auto; min-height: 55px; background: var(--bg-tool); border-bottom: 1px solid var(--border-col); display: flex; align-items: center; padding: 5px 15px; gap: 8px; z-index: 100; flex-wrap: wrap;}
+        .btn { background: var(--bg-side); color: var(--txt-main); border: 1px solid var(--border-col); border-radius: 4px; padding: 6px 10px; font-size: 11px; cursor: pointer; font-weight: bold; transition: 0.2s; white-space: nowrap; display:flex; gap:5px; align-items:center;}
+        .btn:hover { background: var(--accent); color: #fff; border-color:var(--accent);}
+        .btn.active { background: var(--secondary); color: #000; border-color: var(--secondary); }
+        .btn.accent { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .btn.accent:hover { background: var(--accent-hover); }
+        .toolbar-group { display: flex; align-items: center; gap: 6px; border-left: 1px solid var(--border-col); padding-left: 10px; margin-left:2px; height: 35px;}
+
+        /* SIDEBAR */
+        #workspace { display: flex; flex-grow: 1; height: calc(100vh - 55px); }
+        #sidebar { width: 340px; background: var(--bg-side); border-right: 1px solid var(--border-col); display: flex; flex-direction: column; overflow-y: auto; }
+
+        .tabs-header { display: flex; background: var(--canvas-bg); }
+        .tab-btn { flex: 1; padding: 12px; font-size: 10px; font-weight: bold; text-align: center; color: var(--txt-dim); cursor: pointer; border-bottom: 2px solid transparent; text-transform: uppercase; white-space:nowrap;}
+        .tab-btn.active { color: var(--accent); border-bottom: 2px solid var(--accent); background: var(--bg-side);}
+        .tab-content { display: none; flex-direction: column; flex-grow: 1; padding: 15px; overflow-y:auto;}
+        .tab-content.active { display: flex; }
+
+        /* LAYER ITEMS & TOOLS */
+        .layer-item { background: var(--bg-tool); border: 1px solid var(--border-col); padding: 8px; border-radius: 4px; margin-bottom: 8px; display: flex; flex-wrap:wrap; gap: 6px; align-items: center; cursor: pointer; transition:0.2s; }
+        .layer-item.active { border-color: var(--accent); }
+        .layer-item input[type="text"] { flex-grow:1; background: transparent; border:none; color: var(--txt-main); font-size:12px; outline:none; max-width:80px; font-weight:bold;}
+        .layer-item input[type="color"] { width: 20px; height: 20px; border: none; cursor: pointer; background: transparent; flex-shrink:0;}
+        .layer-item input[type="range"] { width: 50px; }
+        .layer-btn { background: var(--canvas-bg); border:1px solid var(--border-col); color:var(--txt-main); cursor:pointer; width:22px; height:22px; border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:12px; transition:0.2s;}
+        .layer-btn:hover { background: var(--accent); color:#fff; border-color:var(--accent);}
+        .editor-textarea { width: 100%; flex-grow: 1; background: var(--canvas-bg); color: var(--secondary); font-family: monospace; font-size: 11px; padding: 10px; border: 1px solid var(--border-col); resize: none; outline: none; white-space: pre; border-radius:4px; margin-top:5px; }
+        
+        .macro-panel { background: rgba(0,0,0,0.2); border: 1px solid var(--border-col); border-radius:4px; padding:10px; margin-bottom:10px; }
+        .macro-panel input { width: 100%; padding:5px; background:var(--canvas-bg); border:1px solid var(--border-col); color:#fff; margin-bottom:5px;}
+
+        /* CANVAS */
+        #blueprint-area { flex-grow: 1; position: relative; background: var(--canvas-bg); cursor: crosshair; overflow: hidden; }
+        #blueprint-area.panning { cursor: grabbing; }
+        svg { width: 100%; height: 100%; }
+
+        .grid-line { stroke: var(--grid-line); stroke-width: 1; pointer-events: none; }
+        .grid-axis { stroke: var(--grid-axis); stroke-width: 1; pointer-events: none; }
+
+        .shape-path { opacity: 1; stroke-width: 2; transition: stroke-width 0.3s; pointer-events: none; mix-blend-mode: normal; }
+        .shape-layer-active { stroke: var(--txt-main) !important; stroke-width: 4 !important; opacity: 1 !important;}
+        
+        .onion-path { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 4,4; opacity: 0.3; pointer-events:none;}
+
+        .wireframe-mode .shape-path { fill: rgba(0,0,0,0) !important; stroke-width: 1.5; opacity: 0.5 !important; }
+        .wireframe-mode .shape-layer-active { stroke-width: 2.5 !important; opacity: 1 !important; }
+
+        .vertex { fill: var(--secondary); stroke: var(--canvas-bg); stroke-width: 1.5; cursor: pointer; }
+        .vertex:hover { fill: var(--txt-main); stroke: var(--secondary); stroke-width: 3; r: 7; }
+        .vertex.dragging { fill: var(--accent); stroke: var(--txt-main); r: 9; }
+        .vertex.locked { fill: #444; stroke:#222; cursor:not-allowed;}
+        .vertex.selected { fill: #fff; stroke: var(--accent); stroke-width:3; r:8; }
+
+        .vertex-label { font-family: monospace; font-size: 11px; fill: var(--txt-main); font-weight: bold; pointer-events: none; opacity:0.8;}
+        .coord-label { font-family: monospace; font-size: 9px; fill: var(--secondary); pointer-events: none; opacity:0.6;}
+        .angle-text { font-family: monospace; font-size: 10px; fill: #ffd700; font-weight:bold; pointer-events: none;}
+        .dist-text { font-family: monospace; font-size: 11px; fill: #00ffcc; font-weight:bold; pointer-events: none;}
+        .area-text { font-family: monospace; font-size: 12px; fill: var(--accent); font-weight:bold; pointer-events: none; opacity:0.8;}
+
+        /* SELECTION MARQUEE */
+        #marquee { position: absolute; border: 1px dashed var(--marquee-border); background: var(--marquee-bg); pointer-events: none; display: none; z-index:50;}
+
+        /* HUD */
+        #hud { position: absolute; bottom: 20px; right: 20px; background: var(--hud-bg); border: 1px solid var(--border-col); padding: 15px; border-radius: 8px; color: var(--txt-main); font-family: monospace; pointer-events: none; display:flex; flex-direction:column; gap:6px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);}
+        #hud h3 { color: var(--accent); font-size: 13px; margin:0; text-transform:uppercase;}
+        #hud-info { font-size: 12px; margin:0;}
+        .tips { font-size: 10px; color:var(--txt-dim); margin:0;}
+
+        .notification { position:absolute; top:80px; left:50%; transform:translateX(-50%); background:var(--accent); color:#fff; padding:8px 15px; border-radius:4px; font-weight:bold; font-size:12px; font-family:sans-serif; opacity:0; transition:0.3s; pointer-events:none; z-index:1000;}
+        .notification.show { opacity:1; }
+    </style>
+</head>
+<body>
+
+    <div id="toolbar">
+        <div class="toolbar-group" style="border:none; padding:0; margin:0;">
+            <button class="btn" title="Pantalla Completa F11" onclick="toggleFullScreen()">🖥️ FS</button>
+            <button class="btn accent" onclick="copyShareURL()" title="Generar Base64 para amigos">🔗 Link URL</button>
+            <button class="btn" onclick="exportToPNG()">🖼️ PNG HD</button>
+        </div>
+
+        <div class="toolbar-group">
+            <button class="btn" onclick="undo()" title="Deshacer (CTRL+Z)">↩</button>
+            <button class="btn" onclick="redo()" title="Rehacer (CTRL+Y)">↪</button>
+        </div>
+
+        <div class="toolbar-group">
+            <!-- Funciones V8 Nuevas de Navegación -->
+            <button class="btn" onclick="toggleIsoGrid()" title="Activar Guías Isométricas" id="btn-iso">📐 Iso Grid</button>
+            <button class="btn" id="btn-snap-grid" title="Magnetismo al Grid">🧲 Snap</button>
+            <button class="btn" id="btn-toggle-onion" title="Onion Skin: Muestra el trazo fantasma anterior a tu click">🧅 Onion Skin</button>
+        </div>
+
+        <div class="toolbar-group">
+            <button class="btn active" id="btn-toggle-labels" title="Etiquetas de Nodos">📝 Labels</button>
+            <button class="btn active" id="btn-toggle-hud" title="Rulers">📏 Medidas</button>
+            <button class="btn" id="btn-wireframe">🩻 Wireframe</button>
+            <button class="btn" id="btn-isolate" title="Modo Aislar: Ocultar todas las demás capas">👁️ Isolate Layer</button>
+        </div>
+        
+        <div class="toolbar-group" style="flex-grow:1; justify-content:flex-end;">
+            <input type="text" id="search-node" placeholder="🔍 Buscar Nodo (Ej: C_Top)..." style="background:#000; color:#fff; border:1px solid #333; font-size:11px; padding:6px; border-radius:4px; width:130px;">
+        </div>
+    </div>
+
+    <div id="workspace">
+        <!-- V8 HUD MULTI SIDEBAR -->
+        <div id="sidebar">
+            <div class="tabs-header">
+                <div class="tab-btn active" onclick="openTab('tab-layers', this)">Capas V8</div>
+                <div class="tab-btn" onclick="openTab('tab-transform', this)">Transform</div>
+                <div class="tab-btn" onclick="openTab('tab-css', this)">CSS</div>
+                <div class="tab-btn" onclick="openTab('tab-json', this)">Data</div>
+            </div>
+
+            <!-- CAPAS -->
+            <div id="tab-layers" class="tab-content active">
+                <div style="font-size:10px; color:#888; margin-bottom:10px;">Arrastra caja en el mapa para <b>Selección Múltiple.</b><br>Usa <b>Teclas de Flecha</b> para hacer 'Nudge'.</div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px; gap:5px;">
+                    <button class="btn" onclick="addShapeLayer()">+ Nueva Capa</button>
+                </div>
+                <div id="layers-container"></div>
+            </div>
+
+            <!-- TRANSFORMACION MULTI-NODO (V8 Exclusivo) -->
+            <div id="tab-transform" class="tab-content">
+                <div class="macro-panel">
+                    <span style="font-size:11px; color:var(--accent); font-weight:bold;">Alineación Múltiple (Selección Activa)</span>
+                    <div style="display:flex; gap:5px; margin-top:5px;">
+                        <button class="btn" style="flex:1" onclick="alignSelection('X')">Alinear X</button>
+                        <button class="btn" style="flex:1" onclick="alignSelection('Y')">Alinear Y</button>
+                    </div>
+                </div>
+                
+                <div class="macro-panel">
+                    <span style="font-size:11px; color:#00ffcc; font-weight:bold;">Transformación de Capa Plena</span>
+                    <div style="display:flex; gap:5px; margin-top:5px; margin-bottom:5px;">
+                        <button class="btn" style="flex:1" onclick="mirrorX()">↔ Mirror X</button>
+                        <button class="btn" style="flex:1" onclick="mirrorY()">↕ Mirror Y</button>
+                    </div>
+                    <label style="font-size:10px; color:#aaa;">Rotar Capa Activa (Grados):</label>
+                    <div style="display:flex; gap:5px;">
+                        <input type="number" id="rotate-deg" value="90">
+                        <button class="btn accent" onclick="rotateLayer()">🔄 Rotar</button>
+                    </div>
+                    
+                    <label style="font-size:10px; color:#aaa; margin-top:5px; display:block;">Escalar Capa (ej: 0.5 o 1.5):</label>
+                    <div style="display:flex; gap:5px;">
+                        <input type="number" step="0.1" id="scale-val" value="0.9">
+                        <button class="btn accent" onclick="scaleLayer()">📏 Escalar</button>
+                    </div>
+                </div>
+
+                <div class="macro-panel">
+                    <span style="font-size:11px; color:#ff00cc; font-weight:bold;">Componer y Simplificar</span>
+                    <button class="btn" style="width:100%; margin-top:5px;" onclick="simplifyLayer()" title="Aplica Convex Hull a la capa">🔷 Hacer Polígono Convexo Complejo</button>
+                </div>
+            </div>
+
+            <!-- GENERADORES CSS/JSON -->
+            <div id="tab-css" class="tab-content">
+                <select id="code-export-format" onchange="compileCode()" style="margin-bottom:5px; width:100%; background:var(--bg-tool); color:var(--txt-main); padding:6px; border:1px solid var(--border-col);">
+                    <option value="css">CSS Clip-Path</option>
+                    <option value="gsap">GSAP Morph Anim.</option>
+                    <option value="svg-html">SVG Inline HTML</option>
+                </select>
+                <textarea id="css-editor" class="editor-textarea" readonly></textarea>
+                <button class="btn accent" style="width:100%; margin-top:5px;" onclick="copyBox('css-editor')">Copiar</button>
+            </div>
+
+            <div id="tab-json" class="tab-content">
+                <textarea id="code-editor" class="editor-textarea" spellcheck="false"></textarea>
+                <div style="display:flex; gap:5px; margin-top:5px;">
+                    <button class="btn accent" style="flex-grow:1;" onclick="copyBox('code-editor')">Copiar</button>
+                    <button class="btn" onclick="clearStorage()">⚠️ Reset ALL</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- AREA DE TRABAJO Y DIBUJO -->
+        <div id="blueprint-area">
+            <svg id="blueprint-svg" viewBox="-500 -500 1000 1000">
+                <g id="onion-group"></g>
+                <g id="grid-group"></g>
+                <g id="shapes-group"></g>
+                <g id="rulers-group"></g>
+                <g id="angles-group"></g>
+                <g id="vertices-group"></g>
+            </svg>
+            <div id="marquee"></div>
+            
+            <div id="hud">
+                <h3>OMEGA V8</h3>
+                <div id="hud-info">Sistema Operativo Integrado.</div>
+                <div class="tips">[SHIFT+Arrastre]=Ortogonal<br>[Teclas Direccionales]=Nudge 1px</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- UTILITIES -->
+    <canvas id="export-canvas" style="display:none;"></canvas>
+    <div id="toast" class="notification">Notificación</div>
+
+    <script>
+        // --- 1. DATA E INICIALIZACIÓN ---
+        const defaultData = {
+            points: {
+                C_Top: [0, -380], C_TR_Out: [329, -190], C_TR_TipCut: [329, -50], C_TR_InCut: [230, 7], C_TR_In: [230, -133], C_Top_In: [0, -266], C_TL_In: [-230, -133], C_BL_In: [-230, 133], C_Bot_In: [0, 266], C_BR_In: [230, 133], C_BR_InCut: [230, -7], C_BR_TipCut: [329, 50], C_BR_Out: [329, 190], C_Bot: [0, 380], C_BL_Out: [-329, 190], C_TL_Out: [-329, -190],
+                D_Top: [0, -90], D_Right: [100, -32], D_Bot: [0, 25], D_Left: [-100, -32],
+                VL_TopOuter: [-200, -110], VL_TopInner: [-130, -110], VL_InnerCubeJunction: [-20, 36], VL_CubeStemBottom: [-20, 220], VL_BotVertex: [0, 235], VL_OuterSlant: [-100, 60],
+                VR_TopInner: [130, -110], VR_TopOuter: [200, -110], VR_OuterSlant: [100, 60], VR_BotVertex: [0, 235], VR_CubeStemBottom: [20, 220], VR_InnerCubeJunction: [20, 36]
+            },
+            shapes: [
+                { name: "Outer_C", color: "#00ffcc", alpha: 0.15, lock: false, vertices: ["C_Top", "C_TR_Out", "C_TR_TipCut", "C_TR_InCut", "C_TR_In", "C_Top_In", "C_TL_In", "C_BL_In", "C_Bot_In", "C_BR_In", "C_BR_InCut", "C_BR_TipCut", "C_BR_Out", "C_Bot", "C_BL_Out", "C_TL_Out"] },
+                { name: "Cube_Diamond", color: "#ffffff", alpha: 0.4, lock: false, vertices: ["D_Top", "D_Right", "D_Bot", "D_Left"] },
+                { name: "V_Left_Wing", color: "#ff0055", alpha: 0.35, lock: false, vertices: ["VL_TopOuter", "VL_TopInner", "VL_InnerCubeJunction", "VL_CubeStemBottom", "VL_BotVertex", "VL_OuterSlant"] },
+                { name: "V_Right_Wing", color: "#00ccaa", alpha: 0.35, lock: false, vertices: ["VR_TopInner", "VR_TopOuter", "VR_OuterSlant", "VR_BotVertex", "VR_CubeStemBottom", "VR_InnerCubeJunction"] }
+            ]
+        };
+
+        let currentGeometry; const storageKey = 'vectorify_omega_v8'; const hash = window.location.hash.slice(1);
+        try {
+            if(hash) { currentGeometry = JSON.parse(decodeURIComponent(atob(hash))); window.location.hash = ""; } 
+            else { const local = localStorage.getItem(storageKey); currentGeometry = local ? JSON.parse(local) : JSON.parse(JSON.stringify(defaultData)); }
+        } catch(e) { currentGeometry = JSON.parse(JSON.stringify(defaultData)); }
+
+        const svg = document.getElementById('blueprint-svg');
+        const hudInfo = document.getElementById('hud-info');
+        
+        let settings = { showLabels: true, snapToGrid: false, wireframe: false, showRulers: true, showArea: true, isIsoGrid: false, gridSize: 10, onionSkin: false, isolateMode: false };
+        let svgViewBox = { x: -500, y: -500, w: 1000, h: 1000 };
+        let activeLayerIndex = 0;
+        let selectedVertices = new Set(); // Multi-Selección Marquee V8
+        
+        // --- 2. HISTORY SYSTEM CON ONION SKINNING ---
+        let history = [JSON.stringify(currentGeometry)]; let historyIndex = 0;
+
+        function pushHistory() {
+            const state = JSON.stringify(currentGeometry); if (state === history[historyIndex]) return;
+            history = history.slice(0, historyIndex + 1); history.push(state); historyIndex++;
+            localStorage.setItem(storageKey, state); updateUI();
+        }
+        function undo() { if (historyIndex > 0) { historyIndex--; currentGeometry = JSON.parse(history[historyIndex]); updateUI(); localStorage.setItem(storageKey, history[historyIndex]); } }
+        function redo() { if (historyIndex < history.length - 1) { historyIndex++; currentGeometry = JSON.parse(history[historyIndex]); updateUI(); localStorage.setItem(storageKey, history[historyIndex]); } }
+        
+        // --- 3. DIBUJO Y ENGINE VISUAL ---
+        function getAreaCenter(pts) {
+            let area=0, cx=0, cy=0;
+            for(let i=0; i<pts.length; i++) {
+                let j = (i+1)%pts.length;
+                let factor = (pts[i][0]*pts[j][1] - pts[j][0]*pts[i][1]);
+                area += factor; cx += (pts[i][0] + pts[j][0]) * factor; cy += (pts[i][1] + pts[j][1]) * factor;
+            }
+            area /= 2; if(area===0) return {area:0, cx:0, cy:0};
+            return { area: Math.abs(Math.round(area)), cx: cx/(6*area), cy: cy/(6*area) };
+        }
+
+        function drawGrid() {
+            const gr = document.getElementById('grid-group'); gr.innerHTML = '';
+            gr.innerHTML += `<line x1="-2000" y1="0" x2="2000" y2="0" class="grid-axis"/>`; gr.innerHTML += `<line x1="0" y1="-2000" x2="0" y2="2000" class="grid-axis"/>`;
+            if(!settings.isIsoGrid) {
+                for(let i = -2000; i <= 2000; i += 50) { if(i===0) continue; gr.innerHTML += `<line x1="-2000" y1="${i}" x2="2000" y2="${i}" class="grid-line"/><line x1="${i}" y1="-2000" x2="${i}" y2="2000" class="grid-line"/>`; }
+            } else {
+                let tan30 = Math.tan(30 * Math.PI / 180);
+                for(let i = -4000; i <= 4000; i += 86.6) {
+                    gr.innerHTML += `<line x1="-2000" y1="${-2000*tan30 + i}" x2="2000" y2="${2000*tan30 + i}" class="grid-line"/>`; // 30deg
+                    gr.innerHTML += `<line x1="-2000" y1="${2000*tan30 + i}" x2="2000" y2="${-2000*tan30 + i}" class="grid-line"/>`; // 150deg
+                }
+            }
+        }
+
+        function renderOnion() {
+            const gr = document.getElementById('onion-group'); gr.innerHTML = '';
+            if(!settings.onionSkin || historyIndex < 1) return;
+            const pastGeo = JSON.parse(history[historyIndex - 1]);
+            pastGeo.shapes.forEach(shape => {
+                const pCoords = shape.vertices.map(v => pastGeo.points[v] ? pastGeo.points[v].join(',') : '').join(' ');
+                gr.innerHTML += `<polygon points="${pCoords}" class="onion-path" />`;
+            });
+        }
+
+        function updateViewBox() { svg.setAttribute('viewBox', `${svgViewBox.x} ${svgViewBox.y} ${svgViewBox.w} ${svgViewBox.h}`); }
+
+        function renderEngine() {
+            const pGroup = document.getElementById('shapes-group'); const vGroup = document.getElementById('vertices-group');
+            const aGroup = document.getElementById('angles-group'); const rGroup = document.getElementById('rulers-group');
+            pGroup.innerHTML = ''; vGroup.innerHTML = ''; aGroup.innerHTML = ''; rGroup.innerHTML = '';
+            const p = currentGeometry.points;
+
+            currentGeometry.shapes.forEach((shape, idx) => {
+                if(settings.isolateMode && idx !== activeLayerIndex) return; // Feature 27: Isolate Layers
+                
+                const shapePts = shape.vertices.map(v => p[v]).filter(v => v);
+                const pathCoords = shapePts.map(pt => pt.join(',')).join(' ');
+                let rgba = shape.color || '#00ffcc';
+                if(!settings.wireframe) {
+                    let hex = shape.color.replace('#',''); let rgb = [parseInt(hex.slice(0,2),16), parseInt(hex.slice(2,4),16), parseInt(hex.slice(4,6),16)];
+                    rgba = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${shape.alpha||0.3})`;
+                }
+
+                pGroup.innerHTML += `<polygon points="${pathCoords}" class="shape-path ${idx === activeLayerIndex ? 'shape-layer-active' : ''}" fill="${rgba}" stroke="${shape.color || '#00ffcc'}"/>`;
+                
+                if (idx === activeLayerIndex && shapePts.length >= 3) {
+                    if(settings.showArea) { const ac = getAreaCenter(shapePts); aGroup.innerHTML += `<text x="${ac.cx}" y="${ac.cy}" class="area-text" text-anchor="middle">${ac.area}px²</text>`; }
+                    for(let i = 0; i < shape.vertices.length; i++) {
+                        const prevObj = p[shape.vertices[(i === 0) ? shape.vertices.length - 1 : i - 1]]; const currObj = p[shape.vertices[i]]; const nextObj = p[shape.vertices[(i + 1) % shape.vertices.length]];
+                        if(prevObj && currObj && nextObj && settings.showRulers) {
+                            const dist = Math.hypot(currObj[0]-nextObj[0], currObj[1]-nextObj[1]).toFixed(0);
+                            const midX = (currObj[0]+nextObj[0])/2; const midY = (currObj[1]+nextObj[1])/2;
+                            const len = Math.hypot(nextObj[0]-currObj[0], nextObj[1]-currObj[1]);
+                            rGroup.innerHTML += `<line x1="${currObj[0]}" y1="${currObj[1]}" x2="${nextObj[0]}" y2="${nextObj[1]}" stroke="#ff00cc" stroke-width="1" stroke-dasharray="3,3"/>`;
+                            rGroup.innerHTML += `<text x="${midX + (-(nextObj[1]-currObj[1])/len)*15}" y="${midY + ((nextObj[0]-currObj[0])/len)*15 + 4}" class="dist-text" text-anchor="middle">${dist}u</text>`;
+                        }
+                    }
+                }
+            });
+
+            const vr = svgViewBox.w / 200; const fs = svgViewBox.w / 150; 
+            
+            Object.keys(p).forEach(pName => {
+                const [x, y] = p[pName];
+                // Checks for Isolate mode ignoring other points visually
+                let renderP = true;
+                if(settings.isolateMode) {
+                    if(!currentGeometry.shapes[activeLayerIndex] || !currentGeometry.shapes[activeLayerIndex].vertices.includes(pName)) renderP = false;
+                }
+                
+                if(renderP) {
+                    const isSelect = selectedVertices.has(pName);
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('cx', x); circle.setAttribute('cy', y); circle.setAttribute('r', draggingVertex === pName ? vr*2.5 : vr);
+                    circle.setAttribute('class', `vertex ${isSelect ? 'selected' : ''} ${draggingVertex === pName ? 'dragging' : ''}`);
+                    circle.setAttribute('data-name', pName);
+                    
+                    if (settings.showLabels) vGroup.innerHTML += `<text x="${x+vr*2}" y="${y-vr}" class="vertex-label" style="font-size:${fs}px">${pName}</text>`;
+                    vGroup.appendChild(circle);
+                }
+            });
+            renderOnion(); compileCode();
+        }
+
+        // --- 4. ENGINE TRANSFORMACIONES MARQUEE & TECLADO ---
+        function alignSelection(axis) {
+            if(selectedVertices.size < 2) return showToast("Selecciona 2+ Nodos primero");
+            let sum = 0; selectedVertices.forEach(v => { sum += currentGeometry.points[v][axis==='X'?0:1]; });
+            const avg = Math.round(sum / selectedVertices.size);
+            selectedVertices.forEach(v => { currentGeometry.points[v][axis==='X'?0:1] = avg; });
+            pushHistory(); showToast(`Nodos Alinear a ${axis}=${avg}`);
+        }
+
+        function mirrorY() {
+            if(activeLayerIndex >= 0 && currentGeometry.shapes[activeLayerIndex]) {
+                if(currentGeometry.shapes[activeLayerIndex].lock) return showToast("Layer Bloqueada");
+                currentGeometry.shapes[activeLayerIndex].vertices.forEach(v => { if(currentGeometry.points[v]) currentGeometry.points[v][1] *= -1; });
+                pushHistory(); showToast("Espejo Y Aplicado");
+            }
+        }
+
+        function rotateLayer() {
+            const deg = parseFloat(document.getElementById('rotate-deg').value);
+            if(!deg) return; const rad = deg * Math.PI/180;
+            const sh = currentGeometry.shapes[activeLayerIndex];
+            if(sh.lock) return showToast("Layer Bloqueada");
+            // find center relative
+            let cx=0, cy=0, qty=0;
+            sh.vertices.forEach(v => { if(currentGeometry.points[v]){ cx+=currentGeometry.points[v][0]; cy+=currentGeometry.points[v][1]; qty++; }});
+            cx/=qty; cy/=qty;
+            sh.vertices.forEach(v => {
+                if(currentGeometry.points[v]){
+                    let nx = Math.round((currentGeometry.points[v][0]-cx)*Math.cos(rad) - (currentGeometry.points[v][1]-cy)*Math.sin(rad) + cx);
+                    let ny = Math.round((currentGeometry.points[v][0]-cx)*Math.sin(rad) + (currentGeometry.points[v][1]-cy)*Math.cos(rad) + cy);
+                    currentGeometry.points[v] = [nx, ny];
+                }
+            });
+            pushHistory(); showToast("Rotado " + deg + "°");
+        }
+
+        function scaleLayer() {
+            const scale = parseFloat(document.getElementById('scale-val').value);
+            const sh = currentGeometry.shapes[activeLayerIndex];
+            if(sh.lock) return showToast("Layer Bloqueada");
+            let cx=0, cy=0, qty=0;
+            sh.vertices.forEach(v => { if(currentGeometry.points[v]){ cx+=currentGeometry.points[v][0]; cy+=currentGeometry.points[v][1]; qty++; }});
+            cx/=qty; cy/=qty;
+            sh.vertices.forEach(v => {
+                if(currentGeometry.points[v]){
+                    currentGeometry.points[v][0] = Math.round(cx + (currentGeometry.points[v][0]-cx)*scale);
+                    currentGeometry.points[v] = [Math.round(cx + (currentGeometry.points[v][0]-cx)*scale), Math.round(cy + (currentGeometry.points[v][1]-cy)*scale)];
+                }
+            });
+            pushHistory(); showToast("Superficie Escalada");
+        }
+        
+        function simplifyLayer() { showToast("Función Matemática Compleja: En Progreso Beta"); }
+
+        // --- 5. DRAG, MARQUEE & VIEW LOGIC ---
+        let draggingVertex = null; let isPanning = false; let startPan = {x:0, y:0}; let startViewBox = {...svgViewBox};
+        let isMarquee = false; let marqueeStart = {x:0,y:0}; let dragBasePositions = {};
+
+        function getMousePositionSVG(evt) { const CTM = svg.getScreenCTM(); return { x: (evt.clientX - CTM.e) / CTM.a, y: (evt.clientY - CTM.f) / CTM.d }; }
+
+        svg.addEventListener('dblclick', (e) => {
+            if (e.target.classList.contains('vertex')) {
+                const pName = e.target.getAttribute('data-name'); delete currentGeometry.points[pName];
+                currentGeometry.shapes.forEach(shape => { shape.vertices = shape.vertices.filter(v => v !== pName); }); pushHistory();
+            } else {
+                if(currentGeometry.shapes[activeLayerIndex] && currentGeometry.shapes[activeLayerIndex].lock) return showToast("❌ Bloqueada");
+                const pos = getMousePositionSVG(e); let n = 1; while(currentGeometry.points[`P_${n}`]) n++; const nw = `P_${n}`;
+                currentGeometry.points[nw] = [Math.round(pos.x), Math.round(pos.y)];
+                if(currentGeometry.shapes[activeLayerIndex]) currentGeometry.shapes[activeLayerIndex].vertices.push(nw); pushHistory();
+            }
+        });
+
+        svg.addEventListener('mousedown', (e) => {
+            if (e.button === 1 || e.buttons === 4 || (e.altKey && !e.shiftKey)) { // ALt click pan
+                isPanning = true; document.getElementById('blueprint-area').classList.add('panning'); startPan = { x: e.clientX, y: e.clientY }; startViewBox = { ...svgViewBox }; return;
+            }
+            if (e.target.classList.contains('vertex')) {
+                draggingVertex = e.target.getAttribute('data-name');
+                if(!selectedVertices.has(draggingVertex)) {
+                    if(!e.shiftKey) selectedVertices.clear();
+                    selectedVertices.add(draggingVertex);
+                }
+                
+                // Store base positions for all selected nodes for multi-drag
+                selectedVertices.forEach(v => {
+                    if(currentGeometry.points[v]) dragBasePositions[v] = { x: currentGeometry.points[v][0], y: currentGeometry.points[v][1] };
+                });
+                startPan = getMousePositionSVG(e);
+            } else {
+                // Start marquee selection
+                if(!e.shiftKey) selectedVertices.clear();
+                isMarquee = true;
+                marqueeStart = {x: e.clientX, y: e.clientY};
+                const m = document.getElementById('marquee');
+                m.style.left = e.clientX + 'px'; m.style.top = e.clientY + 'px'; m.style.width = '0px'; m.style.height = '0px'; m.style.display = 'block';
+                renderEngine();
+            }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (isPanning) {
+                svgViewBox.x = startViewBox.x - (e.clientX - startPan.x) * (svgViewBox.w / svg.clientWidth); svgViewBox.y = startViewBox.y - (e.clientY - startPan.y) * (svgViewBox.h / svg.clientHeight); updateViewBox(); return;
+            }
+            if (isMarquee) {
+                const m = document.getElementById('marquee');
+                m.style.left = Math.min(e.clientX, marqueeStart.x) + 'px'; m.style.top = Math.min(e.clientY, marqueeStart.y) + 'px';
+                m.style.width = Math.abs(e.clientX - marqueeStart.x) + 'px'; m.style.height = Math.abs(e.clientY - marqueeStart.y) + 'px';
+            }
+            if (draggingVertex) {
+                const pos = getMousePositionSVG(e);
+                let dx = pos.x - startPan.x; let dy = pos.y - startPan.y;
+
+                if(e.shiftKey && selectedVertices.size === 1) { // Ortho lock solo si es un nodo directo
+                    if(Math.abs(dx) > Math.abs(dy)) dy = 0; else dx = 0;
+                }
+
+                // MULTI-DRAG Engine
+                selectedVertices.forEach(v => {
+                    if(!dragBasePositions[v]) return;
+                    let nx = dragBasePositions[v].x + dx; let ny = dragBasePositions[v].y + dy;
+                    if (settings.snapToGrid) { nx = Math.round(nx / settings.gridSize) * settings.gridSize; ny = Math.round(ny / settings.gridSize) * settings.gridSize; }
+                    else { nx = Math.round(nx); ny = Math.round(ny); }
+                    currentGeometry.points[v] = [nx, ny];
+                });
+                
+                hudInfo.innerHTML = `Multi-Drag: ${selectedVertices.size} Nodos`;
+                renderEngine();
+            }
+        });
+
+        window.addEventListener('mouseup', (e) => {
+            if (draggingVertex) { draggingVertex = null; pushHistory(); } 
+            if (isMarquee) {
+                isMarquee = false; const m = document.getElementById('marquee'); m.style.display = 'none';
+                
+                // Select nodes logic
+                const svgRect = svg.getBoundingClientRect();
+                const CTM = svg.getScreenCTM();
+                const rect = {
+                    left: (Math.min(e.clientX, marqueeStart.x) - CTM.e) / CTM.a, right: (Math.max(e.clientX, marqueeStart.x) - CTM.e) / CTM.a,
+                    top: (Math.min(e.clientY, marqueeStart.y) - CTM.f) / CTM.d, bottom: (Math.max(e.clientY, marqueeStart.y) - CTM.f) / CTM.d
+                };
+                
+                Object.keys(currentGeometry.points).forEach(pName => {
+                    const [x,y] = currentGeometry.points[pName];
+                    if(x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) selectedVertices.add(pName);
+                });
+                renderEngine();
+            }
+            if (isPanning) { isPanning = false; document.getElementById('blueprint-area').classList.remove('panning'); }
+        });
+
+        // NUDGE ARROW KEYS
+        window.addEventListener('keydown', (e) => { 
+            if(document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return;
+            if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+                e.preventDefault();
+                const speed = e.shiftKey ? 10 : 1;
+                selectedVertices.forEach(v => {
+                    if(e.key==='ArrowUp') currentGeometry.points[v][1] -= speed; else if(e.key==='ArrowDown') currentGeometry.points[v][1] += speed;
+                    else if(e.key==='ArrowLeft') currentGeometry.points[v][0] -= speed; else if(e.key==='ArrowRight') currentGeometry.points[v][0] += speed;
+                });
+                renderEngine();
+            }
+        });
+        window.addEventListener('keyup', (e) => {
+             if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key) && selectedVertices.size > 0) pushHistory();
+        });
+
+        // LUPA SEARCH TOOL
+        document.getElementById('search-node').addEventListener('input', (e) => {
+            const v = e.target.value.toLowerCase(); selectedVertices.clear();
+            if(v.length > 1) {
+                Object.keys(currentGeometry.points).forEach(p => { if(p.toLowerCase().includes(v)) selectedVertices.add(p); });
+                renderEngine();
+            }
+        });
+
+        svg.addEventListener('wheel', (e) => {
+            e.preventDefault(); const pos = getMousePositionSVG(e); const factor = e.deltaY > 0 ? 1.15 : 0.85;
+            svgViewBox.x = pos.x - (pos.x - svgViewBox.x) * factor; svgViewBox.y = pos.y - (pos.y - svgViewBox.y) * factor;
+            svgViewBox.w *= factor; svgViewBox.h *= factor; updateViewBox(); renderEngine();
+        });
+
+        // --- 6. UTILS & UI INTERACTS ---
+        function clearStorage() { if(confirm("Borrar JSON Caché V8?")) { localStorage.removeItem(storageKey); window.location.reload(); } }
+        function showToast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 3000); }
+        function openTab(tId, btn) { document.querySelectorAll('.tab-content, .tab-btn').forEach(e => e.classList.remove('active')); document.getElementById(tId).classList.add('active'); btn.classList.add('active'); }
+        function copyBox(id) { document.getElementById(id).select(); document.execCommand('copy'); showToast("Copiado al Portapapeles"); }
+        function copyShareURL() { window.location.hash = btoa(encodeURIComponent(JSON.stringify(currentGeometry))); navigator.clipboard.writeText(window.location.href); showToast("URL Creada. Puedes pasarle este link a tu equipo!"); }
+
+        document.getElementById('btn-iso').addEventListener('click', (e) => { settings.isIsoGrid = !settings.isIsoGrid; drawGrid(); e.target.classList.toggle('active'); });
+        document.getElementById('btn-toggle-onion').addEventListener('click', (e) => { settings.onionSkin = !settings.onionSkin; e.target.classList.toggle('active'); renderEngine(); });
+        document.getElementById('btn-toggle-labels').addEventListener('click', (e) => { settings.showLabels = !settings.showLabels; e.target.classList.toggle('active'); renderEngine(); });
+        document.getElementById('btn-toggle-hud').addEventListener('click', (e) => { settings.showRulers = !settings.showRulers; e.target.classList.toggle('active'); renderEngine(); });
+        document.getElementById('btn-snap-grid').addEventListener('click', (e) => { settings.snapToGrid = !settings.snapToGrid; e.target.classList.toggle('active'); });
+        document.getElementById('btn-wireframe').addEventListener('click', (e) => { settings.wireframe = !settings.wireframe; e.target.classList.toggle('active'); if(settings.wireframe) svg.classList.add('wireframe-mode'); else svg.classList.remove('wireframe-mode'); });
+        document.getElementById('btn-isolate').addEventListener('click', (e) => { settings.isolateMode = !settings.isolateMode; e.target.classList.toggle('active'); renderEngine(); });
+
+        document.getElementById('ref-opacity').addEventListener('input', (e) => { document.getElementById('ref-image').setAttribute('opacity', e.target.value); });
+        
+        function renderLayers() {
+            let s = currentGeometry.shapes; let html = '';
+            for(let i=0; i<s.length; i++) {
+                html += `
+                <div class="layer-item ${i === activeLayerIndex ? 'active' : ''}" onclick="selectLayer(${i})">
+                    <div style="display:flex; width:100%; gap:5px; align-items:center;">
+                        <input type="color" value="${s[i].color || '#00ffcc'}" onchange="updateShapeProp(${i}, 'color', this.value)" onclick="event.stopPropagation()">
+                        <input type="text" value="${s[i].name}" onchange="updateShapeProp(${i}, 'name', this.value)" onclick="event.stopPropagation()">
+                        <div style="flex-grow:1"></div>
+                        <button class="layer-btn ${s[i].lock?'alert':''}" onclick="event.stopPropagation(); currentGeometry.shapes[${i}].lock = !currentGeometry.shapes[${i}].lock; pushHistory();" title="Bloquear">${s[i].lock ? '🔒' : '🔓'}</button>
+                    </div>
+                </div>`;
+            }
+            document.getElementById('layers-container').innerHTML = html;
+        }
+
+        function selectLayer(i) { activeLayerIndex = i; renderLayers(); renderEngine(); }
+        function updateShapeProp(i, prop, val) { currentGeometry.shapes[i][prop] = (prop==='alpha') ? parseFloat(val) : val; pushHistory(); }
+
+        function toggleFullScreen() { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
+
+        document.getElementById('code-editor').addEventListener('blur', () => { try { currentGeometry = JSON.parse(document.getElementById('code-editor').value); pushHistory(); } catch(e) {} });
+
+        function compileCode() {
+            // Reutiliza mismo generador V8
+            let finalCode = `/* OMEGA V8 CSS Export */\n.vector-bound {\n  width: 500px; aspect-ratio: 1/1; position:relative;\n}\n`;
+            currentGeometry.shapes.forEach(s => {
+                if(s.vertices.length < 3) return;
+                let obj = s.vertices.map(v => currentGeometry.points[v] ? `${((currentGeometry.points[v][0]+500)/10).toFixed(2)}% ${((currentGeometry.points[v][1]+500)/10).toFixed(2)}%` : '0 0').join(', ');
+                finalCode += `\n.${s.name.toLowerCase()} { position: absolute; inset:0; background: ${s.color}; clip-path: polygon(${obj}); opacity: ${s.alpha||1};}`;
+            });
+            document.getElementById('css-editor').value = finalCode;
+        }
+
+        function updateUI() { renderLayers(); renderEngine(); if(document.activeElement.id !== 'code-editor') document.getElementById('code-editor').value = JSON.stringify(currentGeometry, null, 2); }
+
+        updateViewBox(); drawGrid(); updateUI();
+    </script>
+</body>
+</html>

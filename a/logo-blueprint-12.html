@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vectorify | OMEGA Studio V12 Auto-Tracer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-page: #06070a; --bg-canvas: radial-gradient(circle at 50% 50%, #151922 0%, #06070a 100%);
+            --glass-bg: rgba(18, 22, 31, 0.75); --glass-border: rgba(255, 255, 255, 0.08); --glass-blur: blur(20px);
+            --accent: #00e5ff; --accent-glow: rgba(0, 229, 255, 0.4);
+            --danger: #ff3366; --warning: #ffcc00; --txt-main: #f0f2f5; --txt-dim: #8a94a6; --border-col: #2a2f3d;
+            --marquee-bg: rgba(0, 229, 255, 0.08); font-family: 'Inter', -apple-system, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg-page); color: var(--txt-main); height: 100vh; overflow: hidden; user-select: none; display: flex; position: relative; }
+        .glass-panel { background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px;} ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+        /* HEADER Y BOTONERAS */
+        #top-header { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); display: flex; flex-direction:column; gap:8px; align-items: center; justify-content: center; padding: 8px 12px; z-index: 100;}
+        .mode-toggle { display: flex; background: rgba(0,0,0,0.5); border-radius: 20px; padding: 4px; border:1px solid var(--border-col);}
+        .mode-btn { background: transparent; color: var(--txt-dim); font-size: 12px; font-weight: 600; padding: 6px 16px; border-radius: 16px; cursor: pointer; border: none; transition: 0.3s; }
+        .mode-btn.active { background: var(--txt-main); color: #000; box-shadow: 0 2px 10px rgba(0,0,0,0.2);}
+        
+        .cursor-modes { display:flex; gap:5px; background: rgba(0,0,0,0.8); border-radius:12px; padding:5px; border: 1px solid var(--glass-border); align-items:center; }
+        .tool-icon { background:transparent; border:none; color:var(--txt-dim); font-size:16px; padding:5px 8px; cursor:pointer; border-radius:8px; transition:0.2s; display:flex; align-items:center; justify-content:center;}
+        .tool-icon.active { background:var(--accent); color:#000; box-shadow: 0 0 10px var(--accent-glow);} .tool-icon:hover:not(.active) { background:rgba(255,255,255,0.1); }
+        .tool-sep { width:1px; height:20px; background:var(--glass-border); margin:0 5px; }
+
+        .top-utils { position: absolute; top: 15px; z-index:100; display:flex; flex-direction:column; gap:8px; }
+        #left-utils { left: 15px; } #right-utils { right: 15px; }
+        .icon-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--txt-main); width: 36px; height: 36px; border-radius: 50%; display:flex; align-items:center; justify-content:center; cursor: pointer; transition: 0.2s; backdrop-filter: var(--glass-blur); font-size: 14px; }
+        .icon-btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); }
+
+        /* PANELES LATERALES */
+        #left-panel { position: absolute; top: 130px; left: 15px; bottom: 15px; width: 280px; display: flex; flex-direction: column; z-index: 90; overflow:hidden; }
+        #right-panel { position: absolute; top: 130px; right: 15px; bottom: 15px; width: 320px; display: flex; flex-direction: column; z-index: 90; overflow:hidden; transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+
+        .panel-header { padding: 15px; border-bottom: 1px solid var(--glass-border); font-size: 12px; font-weight: 700; color: var(--txt-dim); text-transform: uppercase; letter-spacing: 1px; display:flex; justify-content:space-between; align-items:center;}
+        .panel-body { padding: 15px; overflow-y: auto; flex-grow: 1; display:flex; flex-direction:column; gap:12px; }
+
+        .secondary-btn { background: rgba(255,255,255,0.05); color: var(--txt-main); border: 1px solid var(--glass-border); padding: 8px 12px; border-radius: 8px; font-weight: 500; cursor:pointer; transition:0.2s; font-size:12px; text-align:center; display:flex; align-items:center; justify-content:center; gap:5px;}
+        .secondary-btn:hover { background: rgba(255,255,255,0.1); border-color:var(--txt-dim); }
+
+        .layer-item { background: rgba(0,0,0,0.2); border: 1px solid transparent; border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; cursor: pointer; transition: 0.2s; }
+        .layer-item:hover { background: rgba(255,255,255,0.05); } .layer-item.active { background: rgba(0,229,255,0.05); border-color: var(--glass-border); border-left: 3px solid var(--accent); }
+        .layer-head { display:flex; align-items:center; gap:8px; width:100%; }
+        .layer-item input[type="text"] { background:transparent; border:none; color:var(--txt-main); font-weight:600; font-size:12px; outline:none; flex-grow:1;}
+        .layer-color-pick { width: 16px; height: 16px; border-radius:50%; border:none; cursor:pointer; padding:0;}
+        .layer-color-pick::-webkit-color-swatch-wrapper { padding: 0; } .layer-color-pick::-webkit-color-swatch { border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; }
+
+        .modern-input { background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: #fff; padding: 10px; border-radius: 8px; width:100%; font-family:monospace; font-size:11px; outline:none;}
+        input[type=range] { -webkit-appearance: none; width: 100%; height:4px; border-radius:2px; background: rgba(255,255,255,0.1); }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%; background: var(--accent); cursor: pointer; margin-top: -5px; box-shadow: 0 0 10px var(--accent-glow);}
+        
+        .magic-btn { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color:#00e5ff; font-weight:bold; border:1px solid #00e5ff; border-radius:8px; padding:10px; cursor:pointer; box-shadow:0 0 15px rgba(0,229,255,0.2); font-size:12px; text-transform:uppercase; letter-spacing:1px; transition:0.3s;}
+        .magic-btn:hover { background: #00e5ff; color:#000; box-shadow:0 0 20px rgba(0,229,255,0.6); }
+
+        /* FLOATING UTILS */
+        .zoom-controls { position:absolute; bottom:15px; left:15px; z-index:100; display:flex; flex-direction:column; gap:5px; align-items:center; }
+        .zoom-btn { background:var(--glass-bg); color:#fff; border:1px solid var(--glass-border); width:32px; height:32px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:14px; backdrop-filter:var(--glass-blur);}
+        .zoom-btn:hover { background:rgba(255,255,255,0.2); }
+
+        /* WORKSPACE & SVG */
+        #canvas-area { position: absolute; inset: 0; background: var(--bg-canvas); overflow:hidden;}
+        #canvas-area.tool-select { cursor: crosshair; }
+        #canvas-area.tool-pan { cursor: grab; } #canvas-area.tool-pan:active { cursor: grabbing; }
+        #canvas-area.tool-img { cursor: move; }
+        #canvas-area.dropping-shape { cursor: crosshair !important; }
+
+        svg { width: 100%; height: 100%; }
+        .shape-path { pointer-events: none; mix-blend-mode: normal; stroke-linecap:round; stroke-linejoin:round;}
+        .shape-layer-active { stroke: #fff !important; stroke-width: 3 !important; filter: drop-shadow(0 0 5px rgba(255,255,255,0.5));}
+        
+        .vertex { fill: #fff; stroke: #000; stroke-width: 1.5; cursor: pointer; transition:0.1s;}
+        .vertex:hover { stroke: var(--accent); stroke-width: 3; r: 7; }
+        .vertex.selected { fill: var(--danger); stroke: #fff; stroke-width:2; r:8; }
+
+        .dev-elem { display:none; } .mode-dev .dev-elem { display: block; }
+        body.mode-design #right-panel { transform: translateX(400px); opacity:0; pointer-events:none;}
+        body.mode-dev .shape-layer-active { stroke-width: 1.5 !important; stroke:var(--accent)!important;}
+
+        .vertex-label { font-family: monospace; font-size: 11px; fill: var(--txt-main); font-weight: bold; pointer-events: none;}
+        .dist-text { font-family: monospace; font-size: 11px; fill: var(--accent); font-weight:bold; pointer-events: none; text-shadow:1px 1px 3px #000;}
+        #marquee { position: absolute; border: 1px dashed var(--accent); background: var(--marquee-bg); pointer-events: none; display: none; z-index:50;}
+        
+        .toast-msg { position:absolute; bottom:-50px; left:50%; transform:translateX(-50%); background:var(--txt-main); color:#000; padding:10px 20px; border-radius:30px; font-weight:600; font-size:12px; opacity:0; transition:0.4s; z-index:1000; border:2px solid rgba(0,0,0,0.1); box-shadow:0 4px 20px rgba(0,0,0,0.5);}
+        .toast-msg.show { bottom: 85px; opacity:1; }
+
+        .cuadricula-cs { background-size: 50px 50px; background-image: linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px); background-position: center center; }
+
+        #bottom-panel { position:absolute; bottom:15px; left:50%; transform:translateX(-50%); z-index:100; display:flex; flex-direction:row; gap:15px; align-items:center; padding:10px 20px; }
+        .control-group { display:flex; flex-direction:column; gap:4px; align-items:center;}
+        .control-label { font-size:9px; color:var(--txt-dim); font-weight:bold; letter-spacing:1px; text-transform:uppercase;}
+
+    </style>
+</head>
+<body class="mode-design">
+
+    <div id="canvas-area" class="tool-select cuadricula-cs">
+        <svg id="blueprint-svg" viewBox="-500 -500 1000 1000">
+            <image id="ref-image" href="" x="-400" y="-400" width="800" height="800" opacity="0.4" preserveAspectRatio="xMidYMid meet" pointer-events="none"></image>
+            <g id="grid-group"></g> 
+            <g id="shapes-group"></g>
+            <g id="rulers-group" class="dev-elem"></g>
+            <g id="vertices-group"></g>
+        </svg>
+        <div id="marquee"></div>
+    </div>
+
+    <!-- UI LAYER OVERLAY -->
+    <div id="top-header" class="glass-panel">
+        <div class="mode-toggle">
+            <button class="mode-btn active" id="btn-mode-design" onclick="switchMode('design')">🎨 Taller Creativo</button>
+            <button class="mode-btn" id="btn-mode-dev" onclick="switchMode('dev')">👨‍💻 Código y Cotas</button>
+        </div>
+        
+        <div class="cursor-modes">
+            <button class="tool-icon active" id="tool-select" onclick="setTool('select')" title="Editar Vectores">🖱️ Nodos</button>
+            <div class="tool-sep"></div>
+            <button class="tool-icon" id="tool-pan" onclick="setTool('pan')" title="Arrastrar Lienzo Libremente">✋ Mover</button>
+            <div class="tool-sep"></div>
+            <button class="tool-icon" id="tool-img" onclick="setTool('img')" title="Arrastrar Foto Independientemente">🖼️ Foto</button>
+        </div>
+    </div>
+
+    <!-- UTILS LATERALES -->
+    <div class="top-utils" id="left-utils">
+        <div class="glass-panel" style="padding:5px; display:flex; flex-direction:column; gap:5px;">
+            <button class="icon-btn" onclick="undo()" title="Deshacer (Ctrl+Z)">↩</button>
+            <button class="icon-btn" onclick="redo()" title="Rehacer (Ctrl+Y)">↪</button>
+        </div>
+    </div>
+    <div class="top-utils" id="right-utils">
+        <div class="glass-panel" style="padding:5px; display:flex; flex-direction:column; gap:5px;">
+            <button class="icon-btn" style="color:var(--danger)" onclick="clearRAM()" title="Borrar caché de dibujo">🗑️</button>
+            <button class="icon-btn" onclick="exportToPNG()" title="Descargar como PNG Transparente HD">📷</button>
+        </div>
+    </div>
+
+    <!-- ZOOM CONTROLS PERFECTOS -->
+    <div class="zoom-controls">
+        <button class="zoom-btn" onclick="zoomManual(0.85)">+</button>
+        <button class="zoom-btn" onclick="zoomManual(1.15)">-</button>
+        <button class="zoom-btn" style="height:auto; padding:5px 0; font-size:11px;" onclick="centerCamera()">🎯Centro</button>
+    </div>
+
+    <!-- LEFT PANEL (CAPAS) -->
+    <div id="left-panel" class="glass-panel">
+        <div class="panel-header" style="justify-content:center;">GESTIÓN DE CAPAS V12</div>
+        <div class="panel-body" style="padding:10px; flex-grow:0;">
+            <div style="display:flex; justify-content:space-between; gap:5px; margin-bottom:8px;">
+                <button class="secondary-btn" style="flex:1;" onclick="requestAddShape('polygon')">+ Polígono</button>
+                <button class="secondary-btn" style="flex:1;" onclick="requestAddShape('path')">+ Línea</button>
+            </div>
+            
+            <div style="background:rgba(0,0,0,0.5); padding:10px; border-radius:8px; border:1px solid rgba(0,229,255,0.2);">
+                <span style="font-size:10px; color:#00e5ff; font-weight:bold; letter-spacing:1px; display:block; margin-bottom:5px;">MAGIA IA DE VECTORES</span>
+                <button class="secondary-btn" style="width:100%; border-style:dashed; margin-bottom:5px;" onclick="document.getElementById('upload-ref').click()">1. Subir Imagen/Logo a Calcar</button>
+                <input type="file" id="upload-ref" accept="image/*" style="display:none">
+                <button class="magic-btn" style="width:100%;" onclick="autoVectorizePro()">✨ 2. Auto-Trazar Path</button>
+            </div>
+        </div>
+        <div class="panel-body" id="layers-container" style="padding-top:10px; border-top:1px solid var(--glass-border);"></div>
+    </div>
+
+    <!-- RIGHT PANEL (DEV CODIGO) -->
+    <div id="right-panel" class="glass-panel">
+        <div class="panel-header">PROPIEDADES / CÓDICE</div>
+        <div class="panel-body" style="padding:10px;">
+            <div style="background:rgba(0,0,0,0.3); border-radius:8px; padding:10px; display:flex; flex-direction:column; flex-grow:1; border: 1px solid rgba(255,51,102,0.2);">
+                <span style="font-size:11px; color:var(--txt-dim); font-weight:600; display:block; margin-bottom:8px;">EXPORTAR DISEÑO PURO</span>
+                <select id="code-export-format" class="modern-input" onchange="compileCode()" style="margin-bottom:8px; padding:6px; cursor:pointer;">
+                    <option value="svg-html">SVG Vector Code (Web & Print)</option>
+                    <option value="css">CSS Clip-Path (Animación Web)</option>
+                </select>
+                <textarea id="css-editor" class="modern-input" spellcheck="false" style="flex-grow:1; resize:none; font-size:10px; color:var(--accent); line-height:1.4;"></textarea>
+                <button class="secondary-btn" style="width:100%; margin-top:8px; background:var(--danger); color:#fff;" onclick="copyBox('css-editor')">Copiar Código al Portapapeles</button>
+            </div>
+            
+            <div style="background:rgba(0,0,0,0.3); border-radius:8px; padding:10px; margin-top:10px;">
+                <span style="font-size:11px; color:var(--txt-dim); font-weight:600; display:block; margin-bottom:8px;">AJUSTE PRECISO (GRID)</span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:10px; color:#fff;">Tamaño</span>
+                    <input type="range" id="grid-size" min="10" max="150" step="10" value="50" style="flex-grow:1;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM PANEL PRO (MANIPULACION FOTOGRAFIA) -->
+    <div id="bottom-panel" class="glass-panel">
+        <div class="control-group">
+            <span class="control-label">Agrandar / Achicar Foto Base</span>
+            <input type="range" id="ref-scale" min="0.1" max="5" step="0.1" value="1" style="width:140px;">
+        </div>
+        <div style="width:1px; height:20px; background:var(--glass-border);"></div>
+        <div class="control-group">
+            <span class="control-label">Opacidad Foto</span>
+            <input type="range" id="ref-opacity" min="0" max="1" step="0.1" value="0.4" style="width:100px;">
+        </div>
+    </div>
+
+    <canvas id="auto-canvas" style="display:none"></canvas>
+    <canvas id="export-canvas" style="display:none;"></canvas>
+    <div id="toast" class="toast-msg">Mensaje de Notificación</div>
+
+    <script>
+        // --- DATA E INICIALIZACIÓN V12 ---
+        const storageKey = 'vectorify_omega_v12'; const hash = window.location.hash.slice(1);
+        const defaultData = {
+            imageState: { x: -400, y: -400, baseW: 800, baseH: 800, scale: 1, loaded: false, src: '' },
+            points: { N_C: [0, -100], N_R: [100, 0], N_B: [0, 100], N_L: [-100, 0] },
+            shapes: [ { name: "Diamante_Base", type: "polygon", color: "#00e5ff", alpha: 0.2, lock: false, vertices: ["N_C", "N_R", "N_B", "N_L"] } ]
+        };
+        let currentGeometry; 
+        try {
+            if(hash) { currentGeometry = JSON.parse(decodeURIComponent(atob(hash))); window.location.hash = ""; } 
+            else { const local = localStorage.getItem(storageKey); currentGeometry = local ? JSON.parse(local) : JSON.parse(JSON.stringify(defaultData)); }
+        } catch(e) { currentGeometry = JSON.parse(JSON.stringify(defaultData)); }
+        if(!currentGeometry.imageState.scale) currentGeometry.imageState.scale = 1;
+
+        const svg = document.getElementById('blueprint-svg');
+        let settings = { gridSize: 50, uiMode: 'design', activeTool: 'select' };
+        let svgViewBox = { x: -500, y: -500, w: 1000, h: 1000 };
+        let activeLayerIndex = 0; let selectedVertices = new Set();
+        let pendingShapeToDrop = null; 
+        
+        let history = [JSON.stringify(currentGeometry)]; let historyIndex = 0;
+        function pushHistory(msg="") {
+            const state = JSON.stringify(currentGeometry); if (state === history[historyIndex]) return;
+            history = history.slice(0, historyIndex + 1); history.push(state); historyIndex++;
+            localStorage.setItem(storageKey, state); updateUI(); if(msg) showToast(msg);
+        }
+        function undo() { if (historyIndex > 0) { historyIndex--; currentGeometry = JSON.parse(history[historyIndex]); updateUI(); localStorage.setItem(storageKey, history[historyIndex]);} }
+        function redo() { if (historyIndex < history.length - 1) { historyIndex++; currentGeometry = JSON.parse(history[historyIndex]); updateUI(); localStorage.setItem(storageKey, history[historyIndex]);} }
+        function clearRAM() { if(confirm('¿Reiniciar todo el lienzo desde cero?')) { localStorage.removeItem(storageKey); window.location.reload(); } }
+
+        window.addEventListener('keydown', (e) => { if(document.activeElement.tagName === 'INPUT'||document.activeElement.tagName === 'TEXTAREA') return; if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); } if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); redo(); } });
+
+        // --- UX MECHANICS V12 ---
+        function switchMode(m) {
+            settings.uiMode = m; document.body.className = `mode-${m}`;
+            document.getElementById('btn-mode-design').classList.toggle('active', m==='design'); document.getElementById('btn-mode-dev').classList.toggle('active', m==='dev');
+            if(m==='design') selectedVertices.clear(); renderEngine();
+        }
+
+        function setTool(toolName) {
+            settings.activeTool = toolName; pendingShapeToDrop = null; document.getElementById('canvas-area').classList.remove('dropping-shape');
+            document.querySelectorAll('.tool-icon').forEach(btn => btn.classList.remove('active')); document.getElementById(`tool-${toolName}`).classList.add('active');
+            document.getElementById('canvas-area').className = `tool-${toolName} cuadricula-cs`;
+        }
+
+        function requestAddShape(type) {
+            pendingShapeToDrop = type; setTool('select'); document.getElementById('canvas-area').classList.add('dropping-shape');
+            showToast(`Haz Click en el punto exacto donde deseas posicionar tu línea o vértice.`);
+        }
+
+        // --- ALGORITMO AUTO-VECTORIZADOR DE BORDES MAGICOS (MARCHING SQUARES REDUCED) ---
+        function autoVectorizePro() {
+            const imgEl = document.getElementById('ref-image'); const href = imgEl.getAttribute('href');
+            if(!href || href==="") return showToast("Por favor sube una imagen de logo primero");
+            
+            showToast("⏳ IA Analizando bordes puros de la imagen...");
+            setTimeout(() => {
+                const ac = document.getElementById('auto-canvas'); const ctx = ac.getContext('2d');
+                const img = new Image(); img.crossOrigin = "Anonymous";
+                img.onload = function() {
+                    ac.width = img.width; ac.height = img.height; ctx.drawImage(img, 0, 0);
+                    const iData = ctx.getImageData(0,0, ac.width, ac.height); const data = iData.data;
+                    
+                    let edges = [];
+                    // Rastrear pixeles sólidos contiguos a transparentes (Edge Detection Simple)
+                    for(let y=2; y<ac.height-2; y+=4) { // Saltos de 4px para ultra-optimización. Vector ligero.
+                        for(let x=2; x<ac.width-2; x+=4) {
+                            let idx = (y*ac.width + x)*4;
+                            let alpha = data[idx+3];
+                            if(alpha > 150) {
+                                // Revisar si es un borde (pixel vecino es transparente)
+                                let aRight = data[(y*ac.width + x+4)*4 + 3];
+                                let aBottom = data[((y+4)*ac.width + x)*4 + 3];
+                                if(aRight < 150 || aBottom < 150) {
+                                    // Pixel forma parte del contorno! Mapear a coordenada del Canvas SVG!
+                                    let cX = currentGeometry.imageState.x + (x / ac.width) * (currentGeometry.imageState.baseW * currentGeometry.imageState.scale);
+                                    let cY = currentGeometry.imageState.y + (y / ac.height) * (currentGeometry.imageState.baseH * currentGeometry.imageState.scale);
+                                    edges.push([Math.round(cX), Math.round(cY)]);
+                                }
+                            }
+                        }
+                    }
+
+                    if(edges.length < 5) return showToast("❌ No se encontraron figuras contrastantes vectorizables.");
+
+                    // Envolvente Simple para cerrar la figura como Polígono!
+                    edges.sort((a,b) => a[0]===b[0] ? a[1]-b[1] : a[0]-b[0]);
+                    let lower = []; for(let i=0; i<edges.length; i++) { while(lower.length >= 2 && clc(lower[lower.length-2], lower[lower.length-1], edges[i]) <= 0) lower.pop(); lower.push(edges[i]); }
+                    let upper = []; for(let i=edges.length-1; i>=0; i--) { while(upper.length >= 2 && clc(upper[upper.length-2], upper[upper.length-1], edges[i]) <= 0) upper.pop(); upper.push(edges[i]); }
+                    upper.pop(); lower.pop(); let boundary = lower.concat(upper);
+                    
+                    // Decimar puntos (para evitar cargar el DOM con miles de vértices y hacerlo editable para un humano)
+                    let d = Math.max(1, Math.floor(boundary.length / 40)); 
+                    let neatPoints = boundary.filter((_, idx) => idx % d === 0);
+
+                    // Construir la nueva Capa Geométrica Real
+                    let shapeName = "AutoVect_" + Date.now().toString().substr(-2); let refNodes = [];
+                    neatPoints.forEach((pt, i) => { const n = `P_` + Date.now().toString().substr(-3) + i; currentGeometry.points[n] = pt; refNodes.push(n); });
+                    currentGeometry.shapes.push({ name: shapeName, type:"polygon", color: "#11ff00", alpha: 0.4, lock: false, vertices: refNodes });
+                    activeLayerIndex = currentGeometry.shapes.length - 1; 
+                    pushHistory("✨ ¡Trazo Inteligente Completo! Capa generada exitosamente.");
+                }; 
+                img.src = href;
+            }, 300);
+        }
+        function clc(o,a,b){ return (a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]); } // Mat. Helper
+
+        // --- RENDERIZADO VISUAL ---
+        function updateViewBox() { svg.setAttribute('viewBox', `${svgViewBox.x} ${svgViewBox.y} ${svgViewBox.w} ${svgViewBox.h}`); }
+
+        function renderEngine() {
+            const pG = document.getElementById('shapes-group'); const vG = document.getElementById('vertices-group'); const rG = document.getElementById('rulers-group');
+            pG.innerHTML = ''; vG.innerHTML = ''; rG.innerHTML = ''; const p = currentGeometry.points;
+
+            // Renderizar la foto base modificable
+            const imE = document.getElementById('ref-image'); 
+            if(currentGeometry.imageState.src) imE.setAttribute('href', currentGeometry.imageState.src);
+            imE.setAttribute('x', currentGeometry.imageState.x); imE.setAttribute('y', currentGeometry.imageState.y);
+            imE.setAttribute('width', currentGeometry.imageState.baseW * currentGeometry.imageState.scale);
+            imE.setAttribute('height', currentGeometry.imageState.baseH * currentGeometry.imageState.scale);
+
+            currentGeometry.shapes.forEach((shape, idx) => {
+                const shapePts = shape.vertices.map(v => p[v]).filter(v => v); const pathCoords = shapePts.map(pt => pt.join(',')).join(' ');
+                let rgba = shape.color || '#00e5ff'; let hex = shape.color.replace('#',''); let rgb = [parseInt(hex.slice(0,2),16), parseInt(hex.slice(2,4),16), parseInt(hex.slice(4,6),16)]; rgba = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${shape.alpha||0.3})`;
+                
+                if(shape.type === 'path') {
+                    const dStr = shapePts.map((pt, i) => (i===0?'M':'L') + pt.join(',')).join(' ');
+                    pG.innerHTML += `<path d="${dStr}" fill="none" class="shape-path ${idx === activeLayerIndex ? 'shape-layer-active' : ''}" stroke="${shape.color}" stroke-width="5"/>`;
+                } else {
+                    pG.innerHTML += `<polygon points="${pathCoords}" class="shape-path ${idx === activeLayerIndex ? 'shape-layer-active' : ''}" fill="${rgba}" stroke="${shape.color}"/>`;
+                }
+                
+                if (idx === activeLayerIndex && shapePts.length >= 2 && settings.uiMode==='dev') {
+                    for(let i = 0; i < shape.vertices.length; i++) {
+                        if(shape.type==='path' && i===shape.vertices.length-1) break;
+                        const cO = p[shape.vertices[i]]; const nO = p[shape.vertices[(i + 1) % shape.vertices.length]];
+                        if(cO && nO) { const dist = Math.hypot(cO[0]-nO[0], cO[1]-nO[1]).toFixed(0); const midX = (cO[0]+nO[0])/2; const midY = (cO[1]+nO[1])/2; rG.innerHTML += `<text x="${midX}" y="${midY}" class="dist-text" text-anchor="middle" dominant-baseline="middle">${dist}px</text>`; }
+                    }
+                }
+            });
+
+            const vr = svgViewBox.w / 180; const fs = svgViewBox.w / 140; 
+            Object.keys(p).forEach(pName => {
+                const [x, y] = p[pName];
+                const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                c.setAttribute('cx', x); c.setAttribute('cy', y); c.setAttribute('r', draggingVertex === pName ? vr*2.5 : vr);
+                c.setAttribute('class', `vertex ${selectedVertices.has(pName) ? 'selected' : ''}`);
+                c.setAttribute('data-name', pName);
+                if (settings.uiMode === 'dev') vG.innerHTML += `<text x="${x+vr*2}" y="${y-vr}" class="vertex-label" style="font-size:${fs}px">${pName}</text>`;
+                vG.appendChild(c);
+            });
+            compileCode(); document.getElementById('left-panel').style.display = settings.uiMode==='design'?'none':'flex';
+            document.getElementById('left-panel').style.display = 'flex'; // siempre mostrar capas
+        }
+
+        // --- SISTEMA DE CAPAS Y DOM ---
+        function showToast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 4000); }
+        function renderLayers() {
+            let html = '';
+            currentGeometry.shapes.forEach((s, i) => {
+                const icon = s.type==='path' ? '📏' : '🟦';
+                html += `
+                <div class="layer-item ${i === activeLayerIndex ? 'active' : ''}" onclick="selectLayer(${i})">
+                    <div class="layer-head">
+                        <input type="color" class="layer-color-pick" value="${s.color}" onchange="updateShapeProp(${i}, 'color', this.value)" onclick="event.stopPropagation()">
+                        <input type="text" value="${s.name}" onchange="updateShapeProp(${i}, 'name', this.value)" onclick="event.stopPropagation()">
+                        <div style="font-size:10px;">${icon}</div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:8px; color:var(--txt-dim);">Alfa</span>
+                        <input type="range" min="0" max="1" step="0.1" value="${s.alpha!==undefined?s.alpha:0.3}" onclick="event.stopPropagation()" onchange="updateShapeProp(${i}, 'alpha', this.value)" ${s.type==='path'?'disabled style="opacity:0.2"':''}>
+                        <div style="flex-grow:1"></div>
+                        <button class="icon-btn" style="width:20px; height:20px; font-size:10px;" onclick="event.stopPropagation(); deleteLayer(${i})">🗑</button>
+                    </div>
+                </div>`;
+            }); document.getElementById('layers-container').innerHTML = html;
+        }
+
+        function selectLayer(i) { activeLayerIndex = i; renderLayers(); renderEngine(); }
+        function updateShapeProp(i, prop, val) { currentGeometry.shapes[i][prop] = (prop==='alpha') ? parseFloat(val) : val; pushHistory(); }
+        function deleteLayer(i) { currentGeometry.shapes.splice(i, 1); activeLayerIndex = Math.max(0, currentGeometry.shapes.length-1); pushHistory("Capa eliminada"); }
+
+        // EXPORTACION MAGNIFICA
+        function compileCode() {
+            if(settings.uiMode !== 'dev') return;
+            const format = document.getElementById('code-export-format').value; let fc = "";
+            
+            // CENTRAR RESULTADO MATEMÁTICO AL ORIGEN
+            let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
+            currentGeometry.shapes.forEach(s => s.vertices.forEach(v => {
+                if(!currentGeometry.points[v]) return;
+                let nx=currentGeometry.points[v][0], ny=currentGeometry.points[v][1];
+                if(nx<minX) minX=nx; if(ny<minY) minY=ny; if(nx>maxX) maxX=nx; if(ny>maxY) maxY=ny;
+            }));
+            let wd = Math.abs(maxX-minX) || 1000; let hd = Math.abs(maxY-minY) || 1000;
+
+            if (format === 'css') {
+                fc = `/* Vectorify Pure CSS Engine */\n.logo-contenedor { width: 100%; max-width: 500px; aspect-ratio: ${wd}/${hd}; position:relative; }\n`;
+                currentGeometry.shapes.forEach(s => {
+                    if(s.type==='path' || s.vertices.length < 3) return;
+                    let obj = s.vertices.map(v => currentGeometry.points[v] ? `${(((currentGeometry.points[v][0]-minX)/wd)*100).toFixed(2)}% ${(((currentGeometry.points[v][1]-minY)/hd)*100).toFixed(2)}%` : '0 0').join(', ');
+                    fc += `.${s.name.replace(/[^a-zA-Z0-9]/g,'-').toLowerCase()} { position: absolute; inset:0; background: ${s.color}; clip-path: polygon(${obj}); opacity: ${s.alpha||1};}\n`;
+                });
+            } else { 
+                fc = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${minX} ${minY} ${wd} ${hd}" width="100%" height="100%">\n`;
+                currentGeometry.shapes.forEach(s => {
+                    const obj = s.vertices.map(v => currentGeometry.points[v] ? currentGeometry.points[v].join(',') : '').join(' ');
+                    if(s.type==='path') { const d = s.vertices.map((v,i) => currentGeometry.points[v]?(i===0?'M':'L')+currentGeometry.points[v].join(','):'').join(' '); fc += `  <path id="${s.name}" d="${d}" stroke="${s.color}" fill="none" stroke-width="5"/>\n`; } 
+                    else fc += `  <polygon id="${s.name}" points="${obj}" fill="${s.color}" opacity="${s.alpha}"/>\n`;
+                }); fc += "</svg>";
+            } document.getElementById('css-editor').value = fc;
+        }
+
+        // --- SISTEMA DE NAVEGACION Y EVENTOS STRICTOS V12 ---
+        let draggingVertex = null; let isPanning = false; let startPan = {x:0, y:0}; let startViewBox = {...svgViewBox};
+        let isMarquee = false; let marqueeStart = {x:0,y:0}; let dragBasePositions = {};
+        let isMovingImage = false; let startImagePos = {x:0,y:0};
+
+        function getMousePositionSVG(evt) { const CTM = svg.getScreenCTM(); return { x: (evt.clientX - CTM.e) / CTM.a, y: (evt.clientY - CTM.f) / CTM.d }; }
+
+        svg.addEventListener('mousedown', (e) => {
+            const pos = getMousePositionSVG(e);
+            
+            // Dejar caer nodo donde el usuario decide
+            if (pendingShapeToDrop) {
+                let r = Math.floor(Math.random()*999); let n1 = `N_${r}`; let n2 = `N_${r+1}`; let n3 = `N_${r+2}`; let n4 = `N_${r+3}`;
+                if (pendingShapeToDrop === 'polygon') {
+                    currentGeometry.points[n1] = [Math.round(pos.x), Math.round(pos.y-40)]; currentGeometry.points[n2] = [Math.round(pos.x+40), Math.round(pos.y+40)]; currentGeometry.points[n3] = [Math.round(pos.x-40), Math.round(pos.y+40)];
+                    currentGeometry.shapes.push({ name: "Capa_" + Date.now().toString().substr(-2), type: "polygon", color: "#00e5ff", alpha: 0.35, lock: false, vertices: [n1, n2, n3] });
+                } else {
+                    currentGeometry.points[n1] = [Math.round(pos.x), Math.round(pos.y)]; currentGeometry.points[n2] = [Math.round(pos.x+50), Math.round(pos.y)];
+                    currentGeometry.shapes.push({ name: "Trazo_" + Date.now().toString().substr(-2), type: "path", color: "#ff3366", alpha: 1, lock: false, vertices: [n1, n2] });
+                }
+                activeLayerIndex = currentGeometry.shapes.length - 1; pendingShapeToDrop = null; document.getElementById('canvas-area').classList.remove('dropping-shape');
+                pushHistory("Elemento colocado."); return;
+            }
+
+            if (settings.activeTool === 'pan' || e.button === 1 || e.buttons === 4) { isPanning = true; startPan = { x: e.clientX, y: e.clientY }; startViewBox = { ...svgViewBox }; return; }
+            if (settings.activeTool === 'img') { isMovingImage = true; startPan = pos; startImagePos = {...currentGeometry.imageState}; return; }
+
+            if (e.target.classList.contains('vertex') && settings.activeTool === 'select') {
+                draggingVertex = e.target.getAttribute('data-name');
+                if(!selectedVertices.has(draggingVertex)) { if(!e.shiftKey) selectedVertices.clear(); selectedVertices.add(draggingVertex); }
+                selectedVertices.forEach(v => { if(currentGeometry.points[v]) dragBasePositions[v] = { x: currentGeometry.points[v][0], y: currentGeometry.points[v][1] }; });
+                startPan = pos;
+            } else if (settings.uiMode === 'dev' && settings.activeTool === 'select') { 
+                if(!e.shiftKey) selectedVertices.clear();
+                isMarquee = true; marqueeStart = {x: e.clientX, y: e.clientY};
+                const m = document.getElementById('marquee'); m.style.left = e.clientX + 'px'; m.style.top = e.clientY + 'px'; m.style.width = '0px'; m.style.height = '0px'; m.style.display = 'block';
+                renderEngine();
+            }
+        });
+
+        svg.addEventListener('dblclick', (e) => {
+            if(settings.activeTool !== 'select' || pendingShapeToDrop) return;
+            if (e.target.classList.contains('vertex')) {
+                const pName = e.target.getAttribute('data-name'); delete currentGeometry.points[pName];
+                currentGeometry.shapes.forEach(shape => { shape.vertices = shape.vertices.filter(v => v !== pName); }); pushHistory("Nodo Eliminado.");
+            } else {
+                if(!currentGeometry.shapes[activeLayerIndex]) return;
+                const pos = getMousePositionSVG(e); let n = 1; while(currentGeometry.points[`N_${n}`]) n++; const nw = `N_${n}`;
+                currentGeometry.points[nw] = [Math.round(pos.x), Math.round(pos.y)];
+                currentGeometry.shapes[activeLayerIndex].vertices.push(nw); pushHistory("Nodo inyectado en Capa.");
+            }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (isPanning) { svgViewBox.x = startViewBox.x - (e.clientX - startPan.x) * (svgViewBox.w / svg.clientWidth); svgViewBox.y = startViewBox.y - (e.clientY - startPan.y) * (svgViewBox.h / svg.clientHeight); updateViewBox(); return; }
+            if (isMovingImage) { const pos = getMousePositionSVG(e); currentGeometry.imageState.x = startImagePos.x + (pos.x - startPan.x); currentGeometry.imageState.y = startImagePos.y + (pos.y - startPan.y); renderEngine(); return; }
+            if (isMarquee) { const m = document.getElementById('marquee'); m.style.left = Math.min(e.clientX, marqueeStart.x) + 'px'; m.style.top = Math.min(e.clientY, marqueeStart.y) + 'px'; m.style.width = Math.abs(e.clientX - marqueeStart.x) + 'px'; m.style.height = Math.abs(e.clientY - marqueeStart.y) + 'px'; }
+            
+            if (draggingVertex && settings.activeTool === 'select') {
+                const pos = getMousePositionSVG(e); let dx = pos.x - startPan.x; let dy = pos.y - startPan.y;
+                if(e.shiftKey && selectedVertices.size === 1) { if(Math.abs(dx) > Math.abs(dy)) dy = 0; else dx = 0; } 
+                selectedVertices.forEach(v => {
+                    if(!dragBasePositions[v]) return; let nx = dragBasePositions[v].x + dx; let ny = dragBasePositions[v].y + dy;
+                    if (settings.snapToGrid) { nx = Math.round(nx / settings.gridSize) * settings.gridSize; ny = Math.round(ny / settings.gridSize) * settings.gridSize; } else { nx = Math.round(nx); ny = Math.round(ny); }
+                    currentGeometry.points[v] = [nx, ny];
+                }); renderEngine();
+            }
+        });
+
+        window.addEventListener('mouseup', (e) => {
+            if (draggingVertex) { draggingVertex = null; pushHistory(); } 
+            if (isMovingImage) { isMovingImage = false; pushHistory(); } 
+            if (isMarquee) {
+                isMarquee = false; document.getElementById('marquee').style.display = 'none'; const CTM = svg.getScreenCTM();
+                const rect = { left: (Math.min(e.clientX, marqueeStart.x) - CTM.e) / CTM.a, right: (Math.max(e.clientX, marqueeStart.x) - CTM.e) / CTM.a, top: (Math.min(e.clientY, marqueeStart.y) - CTM.f) / CTM.d, bottom: (Math.max(e.clientY, marqueeStart.y) - CTM.f) / CTM.d };
+                Object.keys(currentGeometry.points).forEach(p => { const [x,y] = currentGeometry.points[p]; if(x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) selectedVertices.add(p); }); renderEngine();
+            } if (isPanning) isPanning = false; 
+        });
+
+        // REFINAMIENTO DE ZOOM Y PINCH ESTRICTOS
+        function zoomManual(factor, originX = svgViewBox.x + svgViewBox.w/2, originY=svgViewBox.y + svgViewBox.h/2) {
+            svgViewBox.x = originX - (originX - svgViewBox.x) * factor; svgViewBox.y = originY - (originY - svgViewBox.y) * factor; 
+            svgViewBox.w *= factor; svgViewBox.h *= factor; updateViewBox(); renderEngine();
+        }
+
+        svg.addEventListener('wheel', (e) => { 
+            e.preventDefault(); 
+            // CONDICIONAL ESTRICTA PARA ZOOM (Solo Diagonal Pinch con trackpad dispara CtrlKey natural en browsers modernos)
+            if(e.ctrlKey || e.metaKey) {
+                const pos = getMousePositionSVG(e); const f = e.deltaY > 0 ? 1.05 : 0.95; zoomManual(f, pos.x, pos.y);
+            } else {
+                // Scroll natural 100% puro para Pan
+                const ratio = svgViewBox.w / svg.clientWidth;
+                svgViewBox.x += e.deltaX * ratio * 1.5; svgViewBox.y += e.deltaY * ratio * 1.5; updateViewBox(); renderEngine(); 
+            }
+        }, {passive: false});
+
+        function centerCamera() { svgViewBox = { x: -500, y: -500, w: 1000, h: 1000 }; updateViewBox(); renderEngine(); }
+
+        // INPUTS DE FOTOGRAFIA Y GRID
+        document.getElementById('ref-opacity').addEventListener('input', (e) => { document.getElementById('ref-image').setAttribute('opacity', e.target.value); });
+        document.getElementById('ref-scale').addEventListener('input', (e) => { currentGeometry.imageState.scale = parseFloat(e.target.value); renderEngine(); });
+        document.getElementById('ref-scale').addEventListener('change', () => { pushHistory("Escala de imagen modificada"); });
+        document.getElementById('upload-ref').addEventListener('change', (e) => { if(e.target.files && e.target.files[0]) { const reader = new FileReader(); reader.onload = function(ev) { currentGeometry.imageState.src = ev.target.result; renderEngine(); showToast("Foto cargada! Modifica su tamaño y posición libremente.");}; reader.readAsDataURL(e.target.files[0]); } });
+        document.getElementById('grid-size').addEventListener('input', (e) => { settings.gridSize = parseInt(e.target.value); document.getElementById('canvas-area').style.backgroundSize = `${settings.gridSize}px ${settings.gridSize}px`; });
+
+        // EXPORTADOR HD
+        function exportToPNG() { const canvas = document.getElementById('export-canvas'); const ctx = canvas.getContext('2d'); const cw = 2000; const ch = 2000; canvas.width = cw; canvas.height = ch; let cleanSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${cw}" height="${ch}" viewBox="-500 -500 1000 1000">\n`; currentGeometry.shapes.forEach(s => { const pObj = s.vertices.map(v => currentGeometry.points[v] ? currentGeometry.points[v].join(',') : '').join(' '); cleanSVG += `<polygon points="${pObj}" fill="${s.color}" opacity="${s.alpha}"/>\n`; }); cleanSVG += "</svg>"; const img = new Image(); img.onload = function() { ctx.clearRect(0,0,cw,ch); ctx.drawImage(img,0,0); const a = document.createElement('a'); a.href = canvas.toDataURL("image/png"); a.download = "dibujo-v12.png"; a.click(); }; img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(cleanSVG))); showToast("Generando Gráfico Web..."); }
+
+        function copyBox(id) { document.getElementById(id).select(); document.execCommand('copy'); showToast("Códice copiado al Portapapeles!"); }
+
+        function updateUI() { renderLayers(); renderEngine(); }
+        updateViewBox(); document.getElementById('canvas-area').style.backgroundSize = `${settings.gridSize}px ${settings.gridSize}px`; updateUI();
+    </script>
+</body>
+</html>

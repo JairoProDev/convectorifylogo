@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vectorify CAD Blueprint 2.2 | Pro Studio</title>
+    <style>
+        :root {
+            --bg: #0b0d11;
+            --panel: #161920;
+            --accent: #00ffcc;
+            --vertex: #ff0055;
+            --length: #ffd700;
+            --angle: #ff8c00;
+            --text: #ffffff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+            background: var(--bg); 
+            color: var(--text);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* Sidebar UX */
+        #sidebar {
+            width: 380px;
+            background: var(--panel);
+            border-right: 2px solid #333;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+            z-index: 100;
+        }
+
+        .header {
+            padding: 24px;
+            background: #1e222b;
+            border-bottom: 3px solid var(--accent);
+        }
+        .header h1 { font-size: 1.4rem; color: var(--accent); letter-spacing: 1px; }
+
+        .config-section {
+            padding: 20px;
+            border-bottom: 1px solid #333;
+            overflow-y: auto;
+        }
+        .config-section h3 { font-size: 0.9rem; color: #888; margin-bottom: 15px; text-transform: uppercase; }
+
+        .control-group { margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; gap: 10px;}
+        .control-group label { font-size: 0.85rem; }
+        
+        select, input[type="range"] {
+            background: #252a35;
+            color: white;
+            border: 1px solid #444;
+            padding: 5px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        /* Toggles */
+        .toggle-btn {
+            background: #333;
+            border: none;
+            color: #666;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 5px;
+            text-align: left;
+            transition: 0.2s;
+            font-size: 0.8rem;
+        }
+        .toggle-btn.active { background: var(--accent); color: #000; font-weight: bold; }
+
+        /* Legend */
+        .legend { font-size: 0.75rem; color: #aaa; line-height: 1.6; }
+        .legend b { color: var(--accent); }
+
+        #editor-container { flex-grow: 1; padding: 15px; display: flex; flex-direction: column; }
+        #code-editor {
+            width: 100%;
+            height: 150px;
+            background: #000;
+            color: var(--accent);
+            font-family: 'Fira Code', monospace;
+            font-size: 11px;
+            border: 1px solid #333;
+            padding: 10px;
+            resize: none;
+            outline: none;
+        }
+
+        /* Blueprint Canvas */
+        #blueprint-area { flex-grow: 1; position: relative; background: #080a0d; }
+        svg { width: 100%; height: 100%; cursor: crosshair; }
+
+        .grid-line { stroke: rgba(255, 255, 255, 0.03); stroke-width: 1; pointer-events: none;}
+        .grid-axis { stroke: rgba(0, 255, 204, 0.15); stroke-width: 1.5; pointer-events: none;}
+
+        .shape-path {
+            fill: rgba(0, 255, 204, 0.03);
+            stroke: var(--accent);
+            stroke-width: 3;
+            pointer-events: visibleStroke;
+        }
+        .shape-path:hover { stroke: #fff; cursor: copy; }
+
+        .line-y { stroke: var(--length); stroke-width: 2.5; stroke-linecap: round; }
+
+        .vertex { fill: var(--vertex); stroke: #fff; stroke-width: 2; cursor: grab; }
+        .vertex.fused { stroke: var(--length); stroke-width: 3; }
+        .vertex.dragging { fill: var(--accent); r: 10; }
+
+        /* Dataviz Styles */
+        .text-label { font-family: 'Fira Code', monospace; font-weight: bold; pointer-events: none; }
+        .label-pname { fill: #fff; font-size: 11px; }
+        .label-coord { fill: var(--accent); font-size: 9px; }
+        .label-length { fill: var(--length); font-size: 10px; font-weight: normal; }
+        .label-angle { fill: var(--angle); font-size: 10px; }
+
+        #hud {
+            position: absolute;
+            top: 20px; right: 20px;
+            background: rgba(0,0,0,0.9);
+            border: 1px solid #444;
+            padding: 20px;
+            border-radius: 12px;
+            min-width: 220px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+        }
+        #hud h4 { color: var(--accent); font-size: 0.8rem; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px;}
+        .hud-stat { font-size: 0.75rem; margin-bottom: 5px; display: flex; justify-content: space-between;}
+        .hud-stat span { color: var(--length); }
+
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <div class="header">
+            <h1>Vectorify CAD v2.2</h1>
+        </div>
+
+        <div class="config-section">
+            <h3>Visualización</h3>
+            <button class="toggle-btn active" id="btn-names" onclick="toggleLayer('names')">Nombres de Puntos</button>
+            <button class="toggle-btn active" id="btn-coords" onclick="toggleLayer('coords')">Coordenadas</button>
+            <button class="toggle-btn active" id="btn-lengths" onclick="toggleLayer('lengths')">Distancias de Línea</button>
+            <button class="toggle-btn" id="btn-angles" onclick="toggleLayer('angles')">Ángulos de Vértice</button>
+            <button class="toggle-btn active" id="btn-grid" onclick="toggleLayer('grid')">Cuadrícula</button>
+        </div>
+
+        <div class="config-section">
+            <div class="control-group">
+                <label>Unidad de Medida:</label>
+                <select id="unit-select" onchange="updateUnits()">
+                    <option value="px">Unidades (px)</option>
+                    <option value="cm">Centímetros (cm)</option>
+                    <option value="mm">Milímetros (mm)</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Paso Grilla:</label>
+                <input type="range" id="grid-range" min="10" max="100" value="50" oninput="updateGridStep()">
+                <span id="grid-val">50 px</span>
+            </div>
+        </div>
+
+        <div class="config-section legend">
+            <h3>Glosario de Puntos</h3>
+            <p><b>C_</b>: Contorno Externo (Letra C)</p>
+            <p><b>V_</b>: Alas Geométricas (Letra V)</p>
+            <p><b>Y_</b>: Eje de Perspectiva (Forma Y)</p>
+            <p><b>_Top/Bot</b>: Superior / Inferior</p>
+            <p><b>_TL/TR</b>: Arriba-Izq / Arriba-Der</p>
+            <p><b>_In/Out</b>: Interior / Exterior</p>
+        </div>
+
+        <div id="editor-container">
+            <textarea id="code-editor" readonly></textarea>
+        </div>
+    </div>
+
+    <div id="blueprint-area">
+        <svg id="blueprint-svg" viewBox="-500 -500 1000 1000">
+            <g id="grid-group"></g>
+            <g id="shapes-group"></g>
+            <g id="y-group"></g>
+            <g id="dataviz-group"></g>
+            <g id="vertices-group"></g>
+        </svg>
+        
+        <div id="hud">
+            <h4>METADATOS CAD</h4>
+            <div id="hud-content">
+                <div class="hud-stat">Escala: <span id="stat-scale">1:1</span></div>
+                <div class="hud-stat">Puntos: <span id="stat-pts">0</span></div>
+                <div class="hud-stat">Unidad: <span id="stat-unit">px</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let config = {
+            layers: { names: true, coords: true, lengths: true, angles: false, grid: true },
+            unit: 'px',
+            scaleFactor: 1,
+            gridStep: 50
+        };
+
+        const unitMap = { 'px': 1, 'cm': 0.026458, 'mm': 0.264583 };
+
+        let geom = {
+            "points": {
+                "C_Top": [0, -390], "C_TR_Out": [338, -195], "C_TR_InCut": [225, -130],
+                "C_Top_In": [0, -260], "C_TL_In": [-225, -130], "C_TL_Out": [-338, -195],
+                "C_BL_Out": [-338, 195], "C_BL_In": [-225, 130], "C_Bot_In": [0, 260],
+                "C_BR_InCut": [225, 130], "C_BR_Out": [338, 195], "C_Bot": [0, 390],
+                "Y_Center": [0, 0], "VL_TopInner": [-125, -75], "VR_TopInner": [125, -75],
+                "VR_InnerCubeJunction": [0, 130], "VL_TopOuter": [-115, -130],
+                "VL_BotVertex": [0, 260], "VL_OuterSlant": [-225, -130],
+                "VR_TopOuter": [115, -130], "VR_BotVertex": [0, 260], "VR_OuterSlant": [225, -130]
+            },
+            "shapes": [
+                { "name": "Outer_C", "vertices": ["C_Top", "C_TR_Out", "C_TR_InCut", "C_Top_In", "C_TL_In", "C_BL_In", "C_Bot_In", "C_BR_InCut", "C_BR_Out", "C_Bot", "C_BL_Out", "C_TL_Out"] },
+                { "name": "V_Left", "vertices": ["VL_TopOuter", "VL_TopInner", "VR_InnerCubeJunction", "VL_BotVertex", "VL_OuterSlant"] },
+                { "name": "V_Right", "vertices": ["VR_TopOuter", "VR_TopInner", "VR_InnerCubeJunction", "VR_BotVertex", "VR_OuterSlant"] }
+            ],
+            "yLines": [["Y_Center", "VR_InnerCubeJunction"], ["Y_Center", "VL_TopInner"], ["Y_Center", "VR_TopInner"]]
+        };
+
+        const svg = document.getElementById('blueprint-svg');
+        const editor = document.getElementById('code-editor');
+        let draggingPoint = null;
+        let fusedGroups = [];
+
+        function init() {
+            drawGrid();
+            render();
+            updateHUDStatus();
+        }
+
+        function toggleLayer(layer) {
+            config.layers[layer] = !config.layers[layer];
+            document.getElementById(`btn-${layer}`).classList.toggle('active', config.layers[layer]);
+            if(layer === 'grid') drawGrid();
+            render();
+        }
+
+        function updateUnits() {
+            config.unit = document.getElementById('unit-select').value;
+            config.scaleFactor = unitMap[config.unit];
+            render();
+            updateHUDStatus();
+        }
+
+        function updateGridStep() {
+            config.gridStep = parseInt(document.getElementById('grid-range').value);
+            document.getElementById('grid-val').innerText = config.gridStep + ' px';
+            drawGrid();
+        }
+
+        function drawGrid() {
+            const group = document.getElementById('grid-group');
+            group.innerHTML = '';
+            if(!config.layers.grid) return;
+
+            group.innerHTML += `<line x1="-500" y1="0" x2="500" y2="0" class="grid-axis"/><line x1="0" y1="-500" x2="0" y2="500" class="grid-axis"/>`;
+            for(let i = -500; i <= 500; i += config.gridStep) {
+                if(i === 0) continue;
+                group.innerHTML += `<line x1="-500" y1="${i}" x2="500" y2="${i}" class="grid-line"/>`;
+                group.innerHTML += `<line x1="${i}" y1="-500" x2="${i}" y2="500" class="grid-line"/>`;
+            }
+        }
+
+        function formatVal(val) {
+            return (val * config.scaleFactor).toFixed(config.unit === 'px' ? 0 : 2);
+        }
+
+        function render() {
+            const shapesGroup = document.getElementById('shapes-group');
+            const verticesGroup = document.getElementById('vertices-group');
+            const yGroup = document.getElementById('y-group');
+            const datavizGroup = document.getElementById('dataviz-group');
+            
+            shapesGroup.innerHTML = ''; verticesGroup.innerHTML = ''; yGroup.innerHTML = ''; datavizGroup.innerHTML = '';
+
+            const pts = geom.points;
+
+            // 1. SHAPES & LENGTHS
+            geom.shapes.forEach((s, sIdx) => {
+                const path = s.vertices.map(v => pts[v].join(',')).join(' ');
+                shapesGroup.innerHTML += `<polygon points="${path}" class="shape-path" data-idx="${sIdx}"/>`;
+                
+                // Medir segmentos
+                for(let i = 0; i < s.vertices.length; i++) {
+                    const p1n = s.vertices[i];
+                    const p2n = s.vertices[(i + 1) % s.vertices.length];
+                    const p1 = pts[p1n];
+                    const p2 = pts[p2n];
+
+                    if(config.layers.lengths) {
+                        const dist = Math.hypot(p2[0]-p1[0], p2[1]-p1[1]);
+                        const mx = (p1[0] + p2[0]) / 2;
+                        const my = (p1[1] + p2[1]) / 2;
+                        datavizGroup.innerHTML += `<text x="${mx}" y="${my}" class="text-label label-length" text-anchor="middle">${formatVal(dist)}${config.unit}</text>`;
+                    }
+
+                    if(config.layers.angles && s.vertices.length > 2) {
+                        const pNext = s.vertices[(i + 2) % s.vertices.length];
+                        const angle = getAngle(p1, p2, pts[pNext]);
+                        datavizGroup.innerHTML += `<text x="${p2[0]}" y="${p2[1] + 25}" class="text-label label-angle" text-anchor="middle">${angle}°</text>`;
+                    }
+                }
+            });
+
+            // 2. Y-STRUCTURE
+            geom.yLines.forEach(line => {
+                const p1 = pts[line[0]];
+                const p2 = pts[line[1]];
+                yGroup.innerHTML += `<line x1="${p1[0]}" y1="${p1[1]}" x2="${p2[0]}" y2="${p2[1]}" class="line-y" />`;
+                if(config.layers.lengths) {
+                    const dist = Math.hypot(p2[0]-p1[0], p2[1]-p1[1]);
+                    const mx = (p1[0] + p2[0]) / 2;
+                    const my = (p1[1] + p2[1]) / 2;
+                    datavizGroup.innerHTML += `<text x="${mx + 10}" y="${my}" class="text-label label-length">${formatVal(dist)}${config.unit}</text>`;
+                }
+            });
+
+            // 3. VERTICES & INFO
+            Object.keys(pts).forEach(pName => {
+                const [x, y] = pts[pName];
+                const isFused = fusedGroups.some(g => g.includes(pName));
+                
+                // Círculo
+                const node = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                node.setAttribute('cx', x); node.setAttribute('cy', y);
+                node.setAttribute('r', draggingPoint === pName ? 10 : 5);
+                node.setAttribute('class', `vertex ${draggingPoint === pName ? 'dragging' : ''} ${isFused ? 'fused' : ''}`);
+                node.setAttribute('data-name', pName);
+                verticesGroup.appendChild(node);
+                
+                // Labels
+                if(config.layers.names) datavizGroup.innerHTML += `<text x="${x+10}" y="${y-10}" class="text-label label-pname">${pName}</text>`;
+                if(config.layers.coords) datavizGroup.innerHTML += `<text x="${x+10}" y="${y+10}" class="text-label label-coord">[${formatVal(x)}, ${formatVal(y)}]</text>`;
+            });
+
+            editor.value = JSON.stringify(geom, null, 4);
+        }
+
+        function getAngle(p1, p2, p3) {
+            const a = Math.hypot(p3[0] - p2[0], p3[1] - p2[1]);
+            const b = Math.hypot(p1[0] - p2[0], p1[1] - p2[1]);
+            const c = Math.hypot(p3[0] - p1[0], p3[1] - p1[1]);
+            let rad = Math.acos((a*a + b*b - c*c) / (2 * a * b));
+            return isNaN(rad) ? 0 : Math.round(rad * 180 / Math.PI);
+        }
+
+        function getMousePos(evt) {
+            const CTM = svg.getScreenCTM();
+            return { x: (evt.clientX - CTM.e) / CTM.a, y: (evt.clientY - CTM.f) / CTM.d };
+        }
+
+        svg.addEventListener('mousedown', (e) => {
+            const pos = getMousePos(e);
+            if (e.target.classList.contains('vertex')) {
+                const name = e.target.getAttribute('data-name');
+                if (e.ctrlKey) {
+                    fusedGroups = fusedGroups.map(g => g.filter(n => n !== name)).filter(g => g.length > 1);
+                } else {
+                    draggingPoint = name;
+                }
+                render();
+            } else if (e.shiftKey && e.target.classList.contains('shape-path')) {
+                const idx = e.target.getAttribute('data-idx');
+                const name = "P_" + Math.random().toString(36).substr(2,4).toUpperCase();
+                geom.points[name] = [Math.round(pos.x), Math.round(pos.y)];
+                geom.shapes[idx].vertices.push(name);
+                render();
+                updateHUDStatus();
+            }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (draggingPoint) {
+                const pos = getMousePos(e);
+                const g = fusedGroups.find(gr => gr.includes(draggingPoint)) || [draggingPoint];
+                g.forEach(p => geom.points[p] = [Math.round(pos.x), Math.round(pos.y)]);
+                render();
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (draggingPoint) {
+                const [x,y] = geom.points[draggingPoint];
+                Object.keys(geom.points).forEach(p => {
+                    if(p !== draggingPoint) {
+                        const [tx, ty] = geom.points[p];
+                        if(Math.hypot(x-tx, y-ty) < 15) {
+                            geom.points[draggingPoint] = [tx, ty];
+                            let g1 = fusedGroups.findIndex(grp => grp.includes(draggingPoint));
+                            let g2 = fusedGroups.findIndex(grp => grp.includes(p));
+                            if(g1 === -1 && g2 === -1) fusedGroups.push([draggingPoint, p]);
+                            else if(g1 !== -1 && g2 === -1) fusedGroups[g1].push(p);
+                            else if(g1 === -1 && g2 !== -1) fusedGroups[g2].push(draggingPoint);
+                        }
+                    }
+                });
+                draggingPoint = null;
+                render();
+            }
+        });
+
+        function updateHUDStatus() {
+            document.getElementById('stat-pts').innerText = Object.keys(geom.points).length;
+            document.getElementById('stat-unit').innerText = config.unit;
+        }
+
+        init();
+    </script>
+</body>
+</html>

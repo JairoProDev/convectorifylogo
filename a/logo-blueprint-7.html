@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vectorify | PRO CAD Studio V8</title>
+    <style>
+        :root {
+            --bg-body: #0f1115; --bg-tool: #1a1d24; --bg-side: #15181e;
+            --border-col: #333; --txt-main: #fff; --txt-dim: #888;
+            --accent: #00ffcc; --accent-hover: #00ccaa; --danger: #ff0055;
+            --grid-line: rgba(255, 255, 255, 0.05); --grid-axis: rgba(0, 255, 204, 0.2);
+            --canvas-bg: #0a0c10; --hud-bg: rgba(0,0,0,0.85);
+        }
+        [data-theme="light"] {
+            --bg-body: #f0f2f5; --bg-tool: #ffffff; --bg-side: #f8f9fa;
+            --border-col: #ddd; --txt-main: #333; --txt-dim: #666;
+            --accent: #0088ff; --accent-hover: #0066cc; --danger: #e6004c;
+            --grid-line: rgba(0, 0, 0, 0.08); --grid-axis: rgba(0, 136, 255, 0.3);
+            --canvas-bg: #e4e7ec; --hud-bg: rgba(255,255,255,0.9);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-body); color: var(--txt-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; user-select: none; }
+
+        /* --- TOOLBAR SUPERIOR --- */
+        #toolbar { height: 60px; background: var(--bg-tool); border-bottom: 1px solid var(--border-col); display: flex; align-items: center; padding: 0 15px; gap: 8px; z-index: 100; overflow-x:auto;}
+        .btn { background: var(--bg-side); color: var(--txt-main); border: 1px solid var(--border-col); border-radius: 4px; padding: 6px 10px; font-size: 11px; cursor: pointer; font-weight: bold; transition: 0.2s; white-space: nowrap; display:flex; gap:5px; align-items:center;}
+        .btn:hover { background: var(--accent); color: #000; border-color:var(--accent);}
+        .btn.active { background: var(--danger); color: #fff; border-color: var(--danger); }
+        .btn.accent { background: var(--accent); color: #000; border-color: var(--accent); }
+        .toolbar-group { display: flex; align-items: center; gap: 6px; border-left: 1px solid var(--border-col); padding-left: 10px; margin-left:2px; }
+        
+        /* --- RIGHT SIDEBAR --- */
+        #workspace { display: flex; flex-grow: 1; height: calc(100vh - 60px); }
+        #sidebar { width: 340px; background: var(--bg-side); border-right: 1px solid var(--border-col); display: flex; flex-direction: column; overflow-y: auto; }
+
+        .tabs-header { display: flex; background: var(--canvas-bg); }
+        .tab-btn { flex: 1; padding: 12px; font-size: 11px; font-weight: bold; text-align: center; color: var(--txt-dim); cursor: pointer; border-bottom: 2px solid transparent; text-transform: uppercase; }
+        .tab-btn.active { color: var(--accent); border-bottom: 2px solid var(--accent); background: var(--bg-side);}
+        .tab-content { display: none; flex-direction: column; flex-grow: 1; padding: 15px; }
+        .tab-content.active { display: flex; }
+
+        /* LAYER ITEMS */
+        .layer-item { background: var(--bg-tool); border: 1px solid var(--border-col); padding: 8px; border-radius: 4px; margin-bottom: 8px; display: flex; flex-wrap:wrap; gap: 6px; align-items: center; cursor: pointer; transition:0.2s; }
+        .layer-item.active { border-color: var(--danger); }
+        .layer-item input[type="text"] { flex-grow:1; background: transparent; border:none; color: var(--txt-main); font-size:12px; outline:none; max-width:80px; font-weight:bold;}
+        .layer-item input[type="color"] { width: 20px; height: 20px; border: none; cursor: pointer; background: transparent; flex-shrink:0;}
+        .layer-item input[type="range"] { width: 50px; }
+        .layer-btn { background: var(--canvas-bg); border:1px solid var(--border-col); color:var(--txt-main); cursor:pointer; width:22px; height:22px; border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:12px;}
+        .layer-btn:hover { background: var(--accent); color:#000; }
+        .layer-btn.alert { border-color:var(--danger); color:var(--danger); }
+        .layer-btn.alert:hover { background:var(--danger); color:#fff; }
+
+        /* CODE CONTAINERS */
+        .editor-textarea { width: 100%; flex-grow: 1; background: var(--canvas-bg); color: var(--accent); font-family: monospace; font-size: 11px; padding: 10px; border: 1px solid var(--border-col); resize: none; outline: none; white-space: pre; border-radius:4px; margin-top:5px; }
+
+        /* --- CANVAS --- */
+        #blueprint-area { flex-grow: 1; position: relative; background: var(--canvas-bg); cursor: default; overflow: hidden; }
+        #blueprint-area.panning { cursor: grabbing; }
+        svg { width: 100%; height: 100%; }
+
+        .grid-line { stroke: var(--grid-line); stroke-width: 1; pointer-events: none; }
+        .grid-axis { stroke: var(--grid-axis); stroke-width: 1; pointer-events: none; }
+
+        .shape-path { opacity: 1; stroke-width: 2; transition: stroke-width 0.3s; pointer-events: none; mix-blend-mode: normal; }
+        .shape-layer-active { stroke: var(--txt-main) !important; stroke-width: 4 !important; opacity: 1 !important;}
+        
+        .wireframe-mode .shape-path { fill: rgba(0,0,0,0) !important; stroke-width: 1.5; opacity: 0.5 !important; }
+        .wireframe-mode .shape-layer-active { stroke-width: 2.5 !important; opacity: 1 !important; }
+
+        .vertex { fill: var(--danger); stroke: var(--txt-main); stroke-width: 2; cursor: pointer; transition: 0.1s; }
+        .vertex:hover { fill: var(--txt-main); stroke: var(--danger); stroke-width: 3; r: 8; }
+        .vertex.dragging { fill: var(--accent); stroke: var(--txt-main); r: 10; }
+        .vertex.locked { fill: #888; stroke:#444; cursor:not-allowed;}
+
+        .vertex-label { font-family: monospace; font-size: 11px; fill: var(--txt-main); font-weight: bold; pointer-events: none;}
+        .coord-label { font-family: monospace; font-size: 9px; fill: var(--accent); pointer-events: none; }
+        .angle-text { font-family: monospace; font-size: 10px; fill: #ffd700; font-weight:bold; pointer-events: none; text-shadow:1px 1px 1px #000;}
+        .dist-text { font-family: monospace; font-size: 11px; fill: #ff00cc; font-weight:bold; pointer-events: none; text-shadow:1px 1px 2px #000;}
+        .area-text { font-family: monospace; font-size: 12px; fill: var(--accent); font-weight:bold; pointer-events: none; opacity:0.8;}
+
+        /* HUD */
+        #hud { position: absolute; bottom: 20px; right: 20px; background: var(--hud-bg); border: 1px solid var(--border-col); padding: 15px; border-radius: 8px; color: var(--txt-main); font-family: monospace; pointer-events: none; display:flex; flex-direction:column; gap:6px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);}
+        #hud h3 { color: var(--accent); font-size: 13px; margin:0;}
+        #hud-info { font-size: 13px; margin:0; font-weight:bold;}
+        .tips { font-size: 10px; color:var(--txt-dim); margin:0;}
+
+        .notification { position:absolute; top:80px; left:50%; transform:translateX(-50%); background:var(--accent); color:#000; padding:8px 15px; border-radius:4px; font-weight:bold; font-size:12px; font-family:sans-serif; opacity:0; transition:0.3s; pointer-events:none; z-index:1000; box-shadow:0 4px 10px rgba(0,0,0,0.4);}
+        .notification.show { opacity:1; }
+    </style>
+</head>
+<body>
+
+    <!-- TOOLBAR V8 (50 FEATURES PACK) -->
+    <div id="toolbar">
+        <div>
+            <button class="btn" title="Toggle Pantalla Completa" onclick="toggleFullScreen()">🖥️ Fullscreen</button>
+            <button class="btn" title="Cambiar Tema Oscuro/Claro" onclick="toggleTheme()">🌓 Theme</button>
+        </div>
+
+        <div class="toolbar-group">
+            <button class="btn accent" onclick="copyShareURL()" title="Share Link">🔗 Enlace</button>
+            <button class="btn" id="btn-export-svg">⬇ SVG</button>
+            <button class="btn" onclick="exportToPNG()">🖼️ PNG</button>
+        </div>
+
+        <div class="toolbar-group">
+            <button class="btn" onclick="undo()" title="Deshacer (CTRL+Z)">↩</button>
+            <button class="btn" onclick="redo()" title="Rehacer (CTRL+Y)">↪</button>
+        </div>
+
+        <div class="toolbar-group">
+            <button class="btn" onclick="centerCamera()" title="Enfocar al centro">🎯 Center</button>
+            <button class="btn" onclick="toggleIsoGrid()" title="Cambiar a Grid Isométrico" id="btn-iso">📐 Iso Grid</button>
+            <button class="btn" id="btn-snap-grid">🧲 Snap</button>
+        </div>
+
+        <div class="toolbar-group">
+            <button class="btn active" id="btn-toggle-labels">📝 Textos</button>
+            <button class="btn active" id="btn-toggle-hud">📏 Cotas</button>
+            <button class="btn active" id="btn-toggle-area">⬛ Áreas</button>
+            <button class="btn" id="btn-wireframe">🩻 Wireframe</button>
+        </div>
+
+        <div class="toolbar-group" style="flex-grow:1; justify-content:flex-end;">
+            <input type="file" id="upload-ref" accept="image/*" style="display:none">
+            <button class="btn" onclick="document.getElementById('upload-ref').click()" title="Foto de Referencia">Calco</button>
+            <input type="range" id="ref-opacity" min="0" max="1" step="0.1" value="0.2" style="width:50px;">
+        </div>
+    </div>
+
+    <div id="workspace">
+        <div id="sidebar">
+            <div class="tabs-header">
+                <div class="tab-btn active" onclick="openTab('tab-layers', this)">Capas</div>
+                <div class="tab-btn" onclick="openTab('tab-css', this)">Code/CSS</div>
+                <div class="tab-btn" onclick="openTab('tab-json', this)">Engine</div>
+            </div>
+
+            <div id="tab-layers" class="tab-content active">
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <button class="btn" onclick="addShapeLayer()">+ Nueva Capa</button>
+                    <button class="btn accent" onclick="mirrorX()">↔ Mirror X Capa Activa</button>
+                </div>
+                <!-- PANEL MULTI LAYER AVANZADO -->
+                <div id="layers-container"></div>
+            </div>
+
+            <div id="tab-css" class="tab-content">
+                <div style="font-size:11px; margin-bottom:5px; color:var(--txt-dim);">Export Global - Selecciona Formato:</div>
+                <select id="code-export-format" onchange="compileCode()" style="margin-bottom:10px; width:100%; background:var(--bg-tool); color:var(--txt-main); padding:6px; border:1px solid var(--border-col);">
+                    <option value="css">CSS Clip-Path</option>
+                    <option value="gsap">GSAP Animación Keyframes</option>
+                    <option value="svg-html">SVG Inline HTML</option>
+                </select>
+                <textarea id="css-editor" class="editor-textarea" readonly></textarea>
+                <div style="display:flex; gap:5px; margin-top:10px;">
+                    <button class="btn accent" style="flex-grow:1;" onclick="copyBox('css-editor')">Copiar</button>
+                    <button class="btn" onclick="downloadFile('export-css.txt', 'css-editor')">⬇ File</button>
+                </div>
+            </div>
+
+            <div id="tab-json" class="tab-content">
+                <div style="font-size:11px; color:var(--txt-dim); margin-bottom:5px; line-height:1.4;">
+                    Base de Datos Matriz.<br><i>Tip: (SHIFT + Arrastrar Nodo) te fuerza el movimiento Ortogonal Recto X o Y.</i>
+                </div>
+                <textarea id="code-editor" class="editor-textarea" spellcheck="false"></textarea>
+                <div style="display:flex; gap:5px; margin-top:10px;">
+                    <button class="btn accent" style="flex-grow:1;" onclick="copyBox('code-editor')">Copiar JSON</button>
+                    <button class="btn" onclick="downloadFile('data-v8.json', 'code-editor')">⬇ File</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="blueprint-area">
+            <svg id="blueprint-svg" viewBox="-500 -500 1000 1000">
+                <image id="ref-image" href="vectorify logo.svg" x="-400" y="-400" width="800" height="800" opacity="0.2" preserveAspectRatio="xMidYMid meet" pointer-events="none"></image>
+                <g id="grid-group"></g>
+                <g id="shapes-group"></g>
+                <g id="rulers-group"></g>
+                <g id="angles-group"></g>
+                <g id="vertices-group"></g>
+            </svg>
+            
+            <div id="hud">
+                <h3>CAD Studio PRO V8</h3>
+                <div id="hud-info">Listo. LocalStorage SAFE.</div>
+                <div class="tips">SHIFT+Drag en punto = Movimiento Recto<br>Doble-Click = Añadir/Quitar Punto<br>Click Medio = Arrastrar Mapa</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CANVAS OCULTO PARA PNG EXPORT -->
+    <canvas id="export-canvas" style="display:none;"></canvas>
+    <div id="toast" class="notification">Notificación</div>
+
+    <script>
+        // --- 1. DATA E INICIALIZACIÓN (LOCALSTORAGE Y HASH) ---
+        const defaultData = {
+            points: {
+                C_Top: [0, -380], C_TR_Out: [329, -190], C_TR_TipCut: [329, -50], C_TR_InCut: [230, 7],
+                C_TR_In: [230, -133], C_Top_In: [0, -266], C_TL_In: [-230, -133], C_BL_In: [-230, 133],
+                C_Bot_In: [0, 266], C_BR_In: [230, 133], C_BR_InCut: [230, -7], C_BR_TipCut: [329, 50],
+                C_BR_Out: [329, 190], C_Bot: [0, 380], C_BL_Out: [-329, 190], C_TL_Out: [-329, -190],
+                D_Top: [0, -90], D_Right: [100, -32], D_Bot: [0, 25], D_Left: [-100, -32],
+                VL_TopOuter: [-200, -110], VL_TopInner: [-130, -110], VL_InnerCubeJunction: [-20, 36],
+                VL_CubeStemBottom: [-20, 220], VL_BotVertex: [0, 235], VL_OuterSlant: [-100, 60],
+                VR_TopInner: [130, -110], VR_TopOuter: [200, -110], VR_OuterSlant: [100, 60],
+                VR_BotVertex: [0, 235], VR_CubeStemBottom: [20, 220], VR_InnerCubeJunction: [20, 36]
+            },
+            shapes: [
+                { name: "Outer_C", color: "#00ffcc", alpha: 0.2, lock: false, vertices: ["C_Top", "C_TR_Out", "C_TR_TipCut", "C_TR_InCut", "C_TR_In", "C_Top_In", "C_TL_In", "C_BL_In", "C_Bot_In", "C_BR_In", "C_BR_InCut", "C_BR_TipCut", "C_BR_Out", "C_Bot", "C_BL_Out", "C_TL_Out"] },
+                { name: "Cube_Diamond", color: "#ff0055", alpha: 0.5, lock: false, vertices: ["D_Top", "D_Right", "D_Bot", "D_Left"] },
+                { name: "V_Left_Wing", color: "#ffd700", alpha: 0.35, lock: false, vertices: ["VL_TopOuter", "VL_TopInner", "VL_InnerCubeJunction", "VL_CubeStemBottom", "VL_BotVertex", "VL_OuterSlant"] },
+                { name: "V_Right_Wing", color: "#0088ff", alpha: 0.35, lock: false, vertices: ["VR_TopInner", "VR_TopOuter", "VR_OuterSlant", "VR_BotVertex", "VR_CubeStemBottom", "VR_InnerCubeJunction"] }
+            ]
+        };
+
+        let currentGeometry;
+        const storageKey = 'vectorify_v8_pro';
+        const hash = window.location.hash.slice(1);
+        
+        try {
+            if(hash) { 
+                currentGeometry = JSON.parse(decodeURIComponent(atob(hash)));
+                window.location.hash = ""; showToast("V8 Data cargada de URL");
+            } else {
+                const local = localStorage.getItem(storageKey);
+                if(local) currentGeometry = JSON.parse(local);
+                else currentGeometry = JSON.parse(JSON.stringify(defaultData));
+            }
+        } catch(e) { currentGeometry = JSON.parse(JSON.stringify(defaultData)); }
+
+        const svg = document.getElementById('blueprint-svg');
+        const editor = document.getElementById('code-editor');
+        const hudInfo = document.getElementById('hud-info');
+        
+        let settings = { showLabels: true, snapToGrid: false, wireframe: false, showRulers: true, showArea: true, isIsoGrid: false, gridSize: 10 };
+        let svgViewBox = { x: -500, y: -500, w: 1000, h: 1000 };
+        let activeLayerIndex = 0;
+        
+        // --- 2. HISTORY SYSTEM ---
+        let history = [JSON.stringify(currentGeometry)];
+        let historyIndex = 0;
+
+        function pushHistory() {
+            const state = JSON.stringify(currentGeometry);
+            if (state === history[historyIndex]) return;
+            history = history.slice(0, historyIndex + 1);
+            history.push(state);
+            historyIndex++;
+            localStorage.setItem(storageKey, state);
+            updateUI();
+        }
+        function undo() { if (historyIndex > 0) { historyIndex--; currentGeometry = JSON.parse(history[historyIndex]); hudInfo.innerHTML = "Undo ejecutado"; updateUI(); localStorage.setItem(storageKey, history[historyIndex]); } }
+        function redo() { if (historyIndex < history.length - 1) { historyIndex++; currentGeometry = JSON.parse(history[historyIndex]); hudInfo.innerHTML = "Redo ejecutado"; updateUI(); localStorage.setItem(storageKey, history[historyIndex]); } }
+        window.addEventListener('keydown', (e) => { 
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); } 
+            if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); redo(); } 
+        });
+
+        // --- 3. MATH & ENGINE CALCULATORS ---
+        function getAngle(p1, p2, p3) {
+            const a = Math.hypot(p3[0] - p2[0], p3[1] - p2[1]); const b = Math.hypot(p1[0] - p2[0], p1[1] - p2[1]); const c = Math.hypot(p3[0] - p1[0], p3[1] - p1[1]);
+            let ang = Math.acos((a*a + b*b - c*c) / (2 * a * b)); if (isNaN(ang)) ang = 0; return Math.round(ang * 180 / Math.PI);
+        }
+        function getAreaCenter(pointsArr) {
+            let area=0, cx=0, cy=0;
+            for(let i=0; i<pointsArr.length; i++) {
+                let j = (i+1)%pointsArr.length;
+                let factor = (pointsArr[i][0]*pointsArr[j][1] - pointsArr[j][0]*pointsArr[i][1]);
+                area += factor; cx += (pointsArr[i][0] + pointsArr[j][0]) * factor; cy += (pointsArr[i][1] + pointsArr[j][1]) * factor;
+            }
+            area /= 2; if(area===0) return {area:0, cx:0, cy:0};
+            return { area: Math.abs(Math.round(area)), cx: cx/(6*area), cy: cy/(6*area) };
+        }
+
+        // --- 4. DIBUJO Y GRID NATIVO ---
+        function drawGrid() {
+            const gr = document.getElementById('grid-group'); gr.innerHTML = '';
+            gr.innerHTML += `<line x1="-2000" y1="0" x2="2000" y2="0" class="grid-axis"/>`;
+            gr.innerHTML += `<line x1="0" y1="-2000" x2="0" y2="2000" class="grid-axis"/>`;
+            
+            if(!settings.isIsoGrid) {
+                // Rectangular
+                for(let i = -2000; i <= 2000; i += 50) {
+                    if(i === 0) continue;
+                    gr.innerHTML += `<line x1="-2000" y1="${i}" x2="2000" y2="${i}" class="grid-line"/>`;
+                    gr.innerHTML += `<line x1="${i}" y1="-2000" x2="${i}" y2="2000" class="grid-line"/>`;
+                }
+            } else {
+                // Isometrico (30 y 150 deg)
+                let tan30 = Math.tan(30 * Math.PI / 180);
+                for(let i = -4000; i <= 4000; i += 86.6) {
+                    // Lineas subiendo y bajando cruzadas
+                    gr.innerHTML += `<line x1="-2000" y1="${-2000*tan30 + i}" x2="2000" y2="${2000*tan30 + i}" class="grid-line"/>`; // 30deg
+                    gr.innerHTML += `<line x1="-2000" y1="${2000*tan30 + i}" x2="2000" y2="${-2000*tan30 + i}" class="grid-line"/>`; // 150deg
+                    // Verticales opcionales
+                    if (Math.abs(i)<=2000) gr.innerHTML += `<line x1="${i}" y1="-2000" x2="${i}" y2="2000" class="grid-line" opacity="0.3"/>`;
+                }
+            }
+        }
+
+        function updateViewBox() { svg.setAttribute('viewBox', `${svgViewBox.x} ${svgViewBox.y} ${svgViewBox.w} ${svgViewBox.h}`); }
+
+        function renderEngine() {
+            const pGroup = document.getElementById('shapes-group'); const vGroup = document.getElementById('vertices-group');
+            const aGroup = document.getElementById('angles-group'); const rGroup = document.getElementById('rulers-group');
+            pGroup.innerHTML = ''; vGroup.innerHTML = ''; aGroup.innerHTML = ''; rGroup.innerHTML = '';
+            
+            const p = currentGeometry.points;
+
+            currentGeometry.shapes.forEach((shape, idx) => {
+                const shapePts = shape.vertices.map(v => p[v]).filter(v => v);
+                const pathCoords = shapePts.map(pt => pt.join(',')).join(' ');
+                
+                // Color, Opacidad y wireframe
+                let rgba = shape.color || '#00ffcc';
+                if(!settings.wireframe) {
+                    let hex = shape.color.replace('#','');
+                    let rgb = [parseInt(hex.slice(0,2),16), parseInt(hex.slice(2,4),16), parseInt(hex.slice(4,6),16)];
+                    rgba = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${shape.alpha||0.3})`;
+                }
+
+                pGroup.innerHTML += `<polygon points="${pathCoords}" class="shape-path ${idx === activeLayerIndex ? 'shape-layer-active' : ''}" fill="${rgba}" stroke="${shape.color || '#00ffcc'}"/>`;
+                
+                if (idx === activeLayerIndex && shapePts.length >= 3) {
+                    // INFO DE HUD APLICADO A LAYER ACTIVA MIENTRAS SE EDITA
+                    if(settings.showArea) {
+                        const areaStats = getAreaCenter(shapePts);
+                        anglesGroup.innerHTML += `<text x="${areaStats.cx}" y="${areaStats.cy}" class="area-text" text-anchor="middle">${areaStats.area}px²</text>`;
+                    }
+
+                    for(let i = 0; i < shape.vertices.length; i++) {
+                        const prevO = p[shape.vertices[(i === 0) ? shape.vertices.length - 1 : i - 1]];
+                        const currO = p[shape.vertices[i]];
+                        const nextO = p[shape.vertices[(i + 1) % shape.vertices.length]];
+                        
+                        if(prevO && currO && nextO) {
+                            if (settings.showLabels) {
+                                const angle = getAngle(prevO, currO, nextO);
+                                aGroup.innerHTML += `<text x="${currO[0]}" y="${currO[1] + 25}" class="angle-text" text-anchor="middle">${angle}°</text>`;
+                            }
+                            if (settings.showRulers) {
+                                const dist = Math.hypot(currO[0]-nextO[0], currO[1]-nextO[1]).toFixed(0);
+                                const midX = (currO[0]+nextO[0])/2; const midY = (currO[1]+nextO[1])/2;
+                                const dsX = nextO[0] - currO[0]; const dsY = nextO[1] - currO[1]; const len = Math.hypot(dsX, dsY);
+                                const nX = -(dsY / len) * 15; const nY = (dsX / len) * 15;
+                                rGroup.innerHTML += `<line x1="${currO[0]}" y1="${currO[1]}" x2="${nextO[0]}" y2="${nextO[1]}" stroke="#ff00cc" stroke-width="1" stroke-dasharray="3,3"/>`;
+                                rGroup.innerHTML += `<text x="${midX + nX}" y="${midY + nY + 4}" class="dist-text" text-anchor="middle">${dist}u</text>`;
+                            }
+                        }
+                    }
+                }
+            });
+
+            const vr = svgViewBox.w / 200; const fs = svgViewBox.w / 150; 
+            
+            Object.keys(p).forEach(pName => {
+                const [x, y] = p[pName];
+                const isD = draggingVertex === pName;
+                
+                // Saber si el punto pertenece a una capa blockeada
+                let isLocked = false;
+                currentGeometry.shapes.forEach(s => { if(s.lock && s.vertices.includes(pName)) isLocked = true; });
+
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', x); circle.setAttribute('cy', y);
+                circle.setAttribute('r', isD ? vr*2.5 : vr);
+                circle.setAttribute('class', `vertex ${isD ? 'dragging' : ''} ${isLocked ? 'locked' : ''}`);
+                circle.setAttribute('data-name', pName);
+                if(isLocked) circle.setAttribute('data-locked', 'true');
+                
+                if (settings.showLabels) {
+                    vGroup.innerHTML += `
+                        <text x="${x + vr*2}" y="${y - vr}" class="vertex-label" style="font-size:${fs}px">${pName}</text>
+                        <text x="${x + vr*2}" y="${y + vr*2}" class="coord-label" style="font-size:${fs*0.8}px">[${Math.round(x)}, ${Math.round(y)}]</text>`;
+                }
+                vGroup.appendChild(circle);
+            });
+            compileCode();
+        }
+
+        // --- 5. INTERFAZ UI TABS Y LAYERS ---
+        function showToast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 3000); }
+        function openTab(tId, btn) { document.querySelectorAll('.tab-content, .tab-btn').forEach(e => e.classList.remove('active')); document.getElementById(tId).classList.add('active'); btn.classList.add('active'); }
+
+        function renderLayers() {
+            let s = currentGeometry.shapes; let html = '';
+            for(let i=0; i<s.length; i++) {
+                html += `
+                <div class="layer-item ${i === activeLayerIndex ? 'active' : ''}" onclick="selectLayer(${i})">
+                    <div style="display:flex; width:100%; gap:5px; align-items:center;">
+                        <input type="color" value="${s[i].color || '#00ffcc'}" onchange="updateShapeProp(${i}, 'color', this.value)" onclick="event.stopPropagation()">
+                        <input type="text" value="${s[i].name}" onchange="updateShapeProp(${i}, 'name', this.value)" onclick="event.stopPropagation()">
+                        <div style="flex-grow:1"></div>
+                        <button class="layer-btn ${s[i].lock?'alert':''}" onclick="event.stopPropagation(); toggleLock(${i})" title="Bloquear Capa">${s[i].lock ? '🔒' : '🔓'}</button>
+                    </div>
+                    <div style="display:flex; width:100%; gap:5px; align-items:center; margin-top:2px;">
+                        <span style="font-size:10px; color:#888;">Opacidad:</span>
+                        <input type="range" min="0" max="1" step="0.05" value="${s[i].alpha!==undefined?s[i].alpha:0.3}" onclick="event.stopPropagation()" onchange="updateShapeProp(${i}, 'alpha', this.value)">
+                        <button class="layer-btn" style="width:16px; height:16px;" onclick="event.stopPropagation(); moveLayer(${i}, -1)">↑</button>
+                        <button class="layer-btn" style="width:16px; height:16px;" onclick="event.stopPropagation(); moveLayer(${i}, 1)">↓</button>
+                        <button class="layer-btn alert" style="width:18px; height:18px; font-weight:bold" onclick="event.stopPropagation(); deleteLayer(${i})">X</button>
+                    </div>
+                </div>`;
+            }
+            document.getElementById('layers-container').innerHTML = html;
+        }
+
+        function selectLayer(i) { activeLayerIndex = i; renderLayers(); renderEngine(); }
+        function updateShapeProp(i, prop, val) { currentGeometry.shapes[i][prop] = (prop==='alpha') ? parseFloat(val) : val; pushHistory(); }
+        function toggleLock(i) { currentGeometry.shapes[i].lock = !currentGeometry.shapes[i].lock; pushHistory(); }
+        function addShapeLayer() { currentGeometry.shapes.push({ name: "Capa_" + Date.now().toString().substr(-2), color: "#fff", alpha: 0.3, lock: false, vertices: [] }); activeLayerIndex = currentGeometry.shapes.length - 1; pushHistory(); }
+        function deleteLayer(i) { currentGeometry.shapes.splice(i, 1); activeLayerIndex = 0; pushHistory(); }
+        function moveLayer(i, dir) {
+            if(i + dir < 0 || i + dir >= currentGeometry.shapes.length) return;
+            const t = currentGeometry.shapes[i]; currentGeometry.shapes[i] = currentGeometry.shapes[i + dir]; currentGeometry.shapes[i + dir] = t;
+            if(activeLayerIndex === i) activeLayerIndex += dir; else if (activeLayerIndex === i + dir) activeLayerIndex -= dir;
+            pushHistory();
+        }
+
+        // --- 6. EXPORTING PRO ---
+        function compileCode() {
+            const format = document.getElementById('code-export-format').value;
+            let finalCode = "";
+            if (format === 'css') {
+                finalCode = `/* Vectorify Pure CSS Engine */\n.logo-wrapper {\n  position: relative;\n  width: 500px;\n  aspect-ratio: 1/1;\n}\n`;
+                currentGeometry.shapes.forEach(s => {
+                    if(s.vertices.length < 3) return;
+                    let pathObj = s.vertices.map(v => {
+                        let p = currentGeometry.points[v]; if(!p) return '0% 0%';
+                        return `${((p[0]+500)/10).toFixed(2)}% ${((p[1]+500)/10).toFixed(2)}%`;
+                    }).join(', ');
+                    let cn = s.name.replace(/[^A-Za-z0-9]/g, '-').toLowerCase();
+                    finalCode += `\n.shape-${cn} {\n  position: absolute;\n  inset: 0;\n  clip-path: polygon(${pathObj});\n  background: ${s.color};\n  opacity: ${s.alpha};\n}`;
+                });
+            } else if (format === 'gsap') { // GSAP morph target arrays
+                finalCode = `// GSAP Poly Coordinates\nconst logoMappping = {\n`;
+                currentGeometry.shapes.forEach(s => {
+                    let pathStr = s.vertices.map(v => currentGeometry.points[v]?`${currentGeometry.points[v][0]},${currentGeometry.points[v][1]}`:'0,0').join(' ');
+                    finalCode += `  ${s.name.replace(/[^A-Za-z0-9]/g, '')}: "${pathStr}",\n`;
+                });
+                finalCode += `};\n\n// Usage: gsap.to(elem, { attr: { points: logoMappping.Outer_C } });`;
+            } else { // SVG HTML
+                finalCode = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${svgViewBox.x} ${svgViewBox.y} ${svgViewBox.w} ${svgViewBox.h}">\n`;
+                currentGeometry.shapes.forEach(shape => {
+                    const obj = shape.vertices.map(v => currentGeometry.points[v] ? currentGeometry.points[v].join(',') : '').join(' ');
+                    finalCode += `  <polygon id="${shape.name}" points="${obj}" fill="${shape.color}" opacity="${shape.alpha}"/>\n`;
+                });
+                finalCode += "</svg>";
+            }
+            document.getElementById('css-editor').value = finalCode;
+        }
+
+        function exportToPNG() {
+            // Convierte SVG a PNG raster super útil.
+            const canvas = document.getElementById('export-canvas'); 
+            const ctx = canvas.getContext('2d');
+            const cw = 2000; const ch = 2000; canvas.width = cw; canvas.height = ch;
+            
+            // Build absolute clean SVG
+            let cleanSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${cw}" height="${ch}" viewBox="-500 -500 1000 1000">\n`;
+            currentGeometry.shapes.forEach(s => {
+                const pObj = s.vertices.map(v => currentGeometry.points[v] ? currentGeometry.points[v].join(',') : '').join(' ');
+                cleanSVG += `  <polygon points="${pObj}" fill="${s.color}" opacity="${s.alpha}"/>\n`;
+            });
+            cleanSVG += "</svg>";
+
+            const img = new Image();
+            img.onload = function() {
+                ctx.clearRect(0,0,cw,ch); ctx.drawImage(img,0,0);
+                const a = document.createElement('a'); a.href = canvas.toDataURL("image/png"); a.download = "vectorify-raster.png"; a.click();
+            };
+            img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(cleanSVG)));
+            showToast("📸 PNG HD Guardado.");
+        }
+
+        document.getElementById('btn-export-svg').addEventListener('click', () => {
+            compileCode(); document.getElementById('code-export-format').value = 'svg-html'; compileCode();
+            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([document.getElementById('css-editor').value], {type: "image/svg+xml"})); a.download = "vectorify-v8.svg"; a.click();
+            showToast("💾 SVG Guardado.");
+        });
+
+        function copyBox(id) { document.getElementById(id).select(); document.execCommand('copy'); showToast("Copiado al Portapapeles 📋"); }
+        function downloadFile(name, id) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([document.getElementById(id).value], {type: "text/plain"})); a.download = name; a.click(); }
+        function copyShareURL() { window.location.hash = btoa(encodeURIComponent(JSON.stringify(currentGeometry))); navigator.clipboard.writeText(window.location.href); showToast("✅ Link V8 para Compartir Copiado"); }
+        function centerCamera() { svgViewBox = { x: -500, y: -500, w: 1000, h: 1000 }; updateViewBox(); renderEngine(); }
+        function toggleFullScreen() { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
+        function toggleTheme() { const t = document.documentElement.getAttribute('data-theme'); document.documentElement.setAttribute('data-theme', t==='dark'?'light':'dark'); }
+        function toggleIsoGrid() { settings.isIsoGrid = !settings.isIsoGrid; drawGrid(); document.getElementById('btn-iso').classList.toggle('active'); }
+        
+        function mirrorX() {
+            if(activeLayerIndex >= 0 && currentGeometry.shapes[activeLayerIndex]) {
+                if(currentGeometry.shapes[activeLayerIndex].lock) return showToast("❌ Layer is Locked");
+                currentGeometry.shapes[activeLayerIndex].vertices.forEach(vName => { if(currentGeometry.points[vName]) currentGeometry.points[vName][0] *= -1; });
+                pushHistory(); hudInfo.innerHTML = "Espejo X Aplicado";
+            }
+        }
+
+        function updateUI() { renderLayers(); renderEngine(); if(document.activeElement !== editor) editor.value = JSON.stringify(currentGeometry, null, 4); }
+        editor.addEventListener('blur', () => { try { currentGeometry = JSON.parse(editor.value); pushHistory(); } catch(e) {showToast("JSON Malformado");} });
+
+        // --- 7. SISTEMA DE DRAG (SHIFT ORTHO Y LOCK SUPPORT) ---
+        let draggingVertex = null; let isPanning = false; let startPan = {x:0, y:0}; let startViewBox = {...svgViewBox};
+        let dragOrigin = {x:0,y:0};
+
+        function getMousePositionSVG(evt) { const CTM = svg.getScreenCTM(); return { x: (evt.clientX - CTM.e) / CTM.a, y: (evt.clientY - CTM.f) / CTM.d }; }
+
+        svg.addEventListener('dblclick', (e) => {
+            if (e.target.classList.contains('vertex')) {
+                if(e.target.getAttribute('data-locked') === 'true') { showToast("❌ Nodo bloqueado por su capa."); return; }
+                const pName = e.target.getAttribute('data-name'); delete currentGeometry.points[pName];
+                currentGeometry.shapes.forEach(shape => { shape.vertices = shape.vertices.filter(v => v !== pName); }); pushHistory();
+            } else {
+                if(currentGeometry.shapes[activeLayerIndex] && currentGeometry.shapes[activeLayerIndex].lock) return showToast("❌ Capa bloqueada.");
+                const pos = getMousePositionSVG(e); let n = 1; while(currentGeometry.points[`N_${n}`]) n++; const nw = `N_${n}`;
+                currentGeometry.points[nw] = [Math.round(pos.x), Math.round(pos.y)];
+                if(currentGeometry.shapes[activeLayerIndex]) currentGeometry.shapes[activeLayerIndex].vertices.push(nw); pushHistory();
+            }
+        });
+
+        svg.addEventListener('mousedown', (e) => {
+            if (e.button === 1 || e.buttons === 4 || (e.altKey && !e.shiftKey)) { // ALt click pan
+                isPanning = true; document.getElementById('blueprint-area').classList.add('panning'); startPan = { x: e.clientX, y: e.clientY }; startViewBox = { ...svgViewBox }; return;
+            }
+            if (e.target.classList.contains('vertex')) {
+                if(e.target.getAttribute('data-locked') === 'true') { showToast("🔒 Nodo de capa bloqueada."); return;}
+                draggingVertex = e.target.getAttribute('data-name');
+                dragOrigin = { x: currentGeometry.points[draggingVertex][0], y: currentGeometry.points[draggingVertex][1]};
+            }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (isPanning) {
+                svgViewBox.x = startViewBox.x - (e.clientX - startPan.x) * (svgViewBox.w / svg.clientWidth); svgViewBox.y = startViewBox.y - (e.clientY - startPan.y) * (svgViewBox.h / svg.clientHeight); updateViewBox(); return;
+            }
+            if (draggingVertex) {
+                const pos = getMousePositionSVG(e); let nx = pos.x; let ny = pos.y;
+
+                // ORTHOGONAL SHIFT LOCK
+                if(e.shiftKey) {
+                    const dx = Math.abs(nx - dragOrigin.x); const dy = Math.abs(ny - dragOrigin.y);
+                    if(dx > dy) ny = dragOrigin.y; else nx = dragOrigin.x; // Lock dimension
+                }
+
+                if (settings.snapToGrid) { nx = Math.round(nx / settings.gridSize) * settings.gridSize; ny = Math.round(ny / settings.gridSize) * settings.gridSize; }
+                else { nx = Math.round(nx); ny = Math.round(ny); }
+
+                let snapped = false; const snapDis = svgViewBox.w / 60; 
+                if(!e.shiftKey) {
+                    Object.keys(currentGeometry.points).forEach(pName => {
+                        if (pName !== draggingVertex) {
+                            const px = currentGeometry.points[pName][0]; const py = currentGeometry.points[pName][1];
+                            if (Math.hypot(nx - px, ny - py) < snapDis) { nx = px; ny = py; snapped = true; }
+                        }
+                    });
+                }
+
+                currentGeometry.points[draggingVertex] = [nx, ny];
+                hudInfo.innerHTML = snapped ? `<span style="color:#00ffcc">💥 FUSIÓN: [${nx}, ${ny}]</span>` : `${e.shiftKey?'<b>[RESTRICT]</b> ':''}Moviendo: [${nx}, ${ny}]`;
+                renderEngine();
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (draggingVertex) { draggingVertex = null; pushHistory(); hudInfo.innerHTML = "Salvado a LocalStorage V8."; } 
+            if (isPanning) { isPanning = false; document.getElementById('blueprint-area').classList.remove('panning'); }
+        });
+
+        svg.addEventListener('wheel', (e) => {
+            e.preventDefault(); const pos = getMousePositionSVG(e); const factor = e.deltaY > 0 ? 1.15 : 0.85;
+            svgViewBox.x = pos.x - (pos.x - svgViewBox.x) * factor; svgViewBox.y = pos.y - (pos.y - svgViewBox.y) * factor;
+            svgViewBox.w *= factor; svgViewBox.h *= factor; updateViewBox(); renderEngine();
+        });
+
+        // TOOGLES
+        document.getElementById('btn-toggle-labels').addEventListener('click', (e) => { settings.showLabels = !settings.showLabels; e.target.classList.toggle('active'); renderEngine(); });
+        document.getElementById('btn-toggle-hud').addEventListener('click', (e) => { settings.showRulers = !settings.showRulers; e.target.classList.toggle('active'); renderEngine(); });
+        document.getElementById('btn-toggle-area').addEventListener('click', (e) => { settings.showArea = !settings.showArea; e.target.classList.toggle('active'); renderEngine(); });
+        document.getElementById('btn-snap-grid').addEventListener('click', (e) => { settings.snapToGrid = !settings.snapToGrid; e.target.classList.toggle('active'); });
+        document.getElementById('btn-wireframe').addEventListener('click', (e) => { settings.wireframe = !settings.wireframe; e.target.classList.toggle('active'); if(settings.wireframe) svg.classList.add('wireframe-mode'); else svg.classList.remove('wireframe-mode'); });
+        document.getElementById('ref-opacity').addEventListener('input', (e) => { document.getElementById('ref-image').setAttribute('opacity', e.target.value); });
+        document.getElementById('upload-ref').addEventListener('change', (e) => { if(e.target.files && e.target.files[0]) { const reader = new FileReader(); reader.onload = function(ev) { document.getElementById('ref-image').setAttribute('href', ev.target.result); }; reader.readAsDataURL(e.target.files[0]); } });
+
+        // INIT
+        updateViewBox(); drawGrid(); updateUI(); compileCode();
+    </script>
+</body>
+</html>

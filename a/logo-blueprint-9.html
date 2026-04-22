@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vectorify | OMEGA Studio V9 Premium</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* MODERN PREMIUM THEME */
+            --bg-page: #080a0f;
+            --bg-canvas: radial-gradient(circle at 50% 50%, #151922 0%, #080a0f 100%);
+            --glass-bg: rgba(18, 22, 31, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-blur: blur(20px);
+            
+            --accent: #00ffcc;
+            --accent-glow: rgba(0, 255, 204, 0.4);
+            --danger: #ff3366;
+            --txt-main: #f0f2f5;
+            --txt-dim: #8a94a6;
+            --border-col: #2a2f3d;
+
+            --grid-line: rgba(255, 255, 255, 0.03);
+            --grid-axis: rgba(0, 255, 204, 0.1);
+            --marquee-bg: rgba(0, 255, 204, 0.08);
+            
+            font-family: 'Inter', -apple-system, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: var(--bg-page); color: var(--txt-main); 
+            height: 100vh; overflow: hidden; user-select: none;
+            display: flex; position: relative;
+        }
+
+        /* --- FLOATING PREMIUM UI --- */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        /* SCROLLBARS */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+        /* HEADER & MODE TOGGLE */
+        #top-header {
+            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+            display: flex; align-items: center; justify-content: center; gap: 20px;
+            padding: 8px 12px; z-index: 100;
+        }
+        .mode-toggle { display: flex; background: rgba(0,0,0,0.5); border-radius: 20px; padding: 4px; border:1px solid var(--border-col);}
+        .mode-btn {
+            background: transparent; color: var(--txt-dim); font-size: 13px; font-weight: 600;
+            padding: 6px 16px; border-radius: 16px; cursor: pointer; border: none; transition: 0.3s;
+        }
+        .mode-btn.active { background: var(--txt-main); color: #000; box-shadow: 0 2px 10px rgba(0,0,0,0.2);}
+
+        /* TOP LEFT / RIGHT UTILS */
+        .top-utils { position: absolute; top: 15px; z-index:100; display:flex; gap:10px; }
+        #left-utils { left: 15px; }
+        #right-utils { right: 15px; }
+
+        .icon-btn {
+            background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--txt-main);
+            width: 36px; height: 36px; border-radius: 50%; display:flex; align-items:center; justify-content:center;
+            cursor: pointer; transition: 0.2s; backdrop-filter: var(--glass-blur); font-size: 14px;
+        }
+        .icon-btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); }
+        .icon-btn.active { color: var(--accent); border-color: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
+
+        /* PANELS */
+        #left-panel {
+            position: absolute; top: 70px; left: 15px; bottom: 15px; width: 280px;
+            display: flex; flex-direction: column; z-index: 90; overflow:hidden;
+        }
+        #right-panel {
+            position: absolute; top: 70px; right: 15px; bottom: 15px; width: 320px;
+            display: flex; flex-direction: column; z-index: 90; overflow:hidden;
+            transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .panel-header { padding: 15px; border-bottom: 1px solid var(--glass-border); font-size: 12px; font-weight: 700; color: var(--txt-dim); text-transform: uppercase; letter-spacing: 1px; display:flex; justify-content:space-between; align-items:center;}
+        .panel-body { padding: 15px; overflow-y: auto; flex-grow: 1; display:flex; flex-direction:column; gap:12px; }
+
+        /* BUTTONS */
+        .primary-btn { background: var(--txt-main); color: #000; border: none; padding: 10px 15px; border-radius: 8px; font-weight: 600; cursor:pointer; transition:0.2s; font-size:12px; display:inline-flex; align-items:center; justify-content:center; gap:8px;}
+        .primary-btn:hover { background: #fff; box-shadow: 0 4px 15px rgba(255,255,255,0.2); transform: translateY(-1px);}
+        .secondary-btn { background: rgba(255,255,255,0.05); color: var(--txt-main); border: 1px solid var(--glass-border); padding: 8px 12px; border-radius: 8px; font-weight: 500; cursor:pointer; transition:0.2s; font-size:12px;}
+        .secondary-btn:hover { background: rgba(255,255,255,0.1); }
+        .secondary-btn.active { border-color: var(--accent); color: var(--accent); }
+
+        /* LAYERS UI */
+        .layer-item {
+            background: rgba(0,0,0,0.2); border: 1px solid transparent; border-radius: 10px;
+            padding: 10px; display: flex; flex-direction: column; gap: 8px; cursor: pointer; transition: 0.2s;
+        }
+        .layer-item:hover { background: rgba(255,255,255,0.05); }
+        .layer-item.active { background: rgba(0,255,204,0.05); border-color: var(--glass-border); border-left: 3px solid var(--accent); }
+        .layer-head { display:flex; align-items:center; gap:8px; width:100%; }
+        .layer-item input[type="text"] { background:transparent; border:none; color:var(--txt-main); font-weight:600; font-size:13px; outline:none; flex-grow:1;}
+        .layer-color-pick { width: 16px; height: 16px; border-radius:50%; border:none; cursor:pointer; padding:0;}
+        .layer-color-pick::-webkit-color-swatch-wrapper { padding: 0; }
+        .layer-color-pick::-webkit-color-swatch { border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; }
+
+        /* SLIDERS & INPUTS */
+        .modern-input { background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: #fff; padding: 10px; border-radius: 8px; width:100%; font-family:monospace; font-size:12px; outline:none;}
+        .modern-input:focus { border-color: var(--accent); }
+        
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 12px; width: 12px; border-radius: 50%; background: var(--accent); cursor: pointer; margin-top: -4px; box-shadow: 0 0 10px var(--accent-glow);}
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: rgba(255,255,255,0.1); border-radius: 2px;}
+
+        /* BOTTOM TOOLBAR */
+        #bottom-toolbar {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 5px; padding: 8px; z-index: 100; align-items:center;
+            transition: 0.3s;
+        }
+        .tool-divider { width: 1px; height: 24px; background: var(--glass-border); margin: 0 10px; }
+
+        /* WORKSPACE & SVG */
+        #canvas-area { position: absolute; inset: 0; background: var(--bg-canvas); cursor: crosshair; overflow:hidden;}
+        #canvas-area.panning { cursor: grabbing; }
+        svg { width: 100%; height: 100%; }
+        
+        .shape-path { transition: stroke-width 0.2s, opacity 0.2s; pointer-events: none; mix-blend-mode: normal; }
+        .shape-layer-active { stroke: #fff !important; stroke-width: 3 !important;}
+        
+        .onion-path { fill: none; stroke: var(--danger); stroke-width: 1.5; stroke-dasharray: 4,4; opacity: 0.4; pointer-events:none;}
+        .wireframe-mode .shape-path { fill: rgba(0,0,0,0) !important; stroke-width: 1.5; opacity: 0.4 !important; }
+        .wireframe-mode .shape-layer-active { stroke-width: 2.5 !important; opacity: 1 !important; }
+
+        .vertex { fill: #fff; stroke: rgba(0,0,0,0.5); stroke-width: 1.5; cursor: pointer; transition:0.1s;}
+        .vertex:hover { stroke: var(--accent); stroke-width: 3; r: 7; }
+        .vertex.dragging { fill: var(--accent); stroke: #fff; r: 9; }
+        .vertex.locked { fill: #444; stroke:#111; cursor:not-allowed;}
+        .vertex.selected { fill: var(--danger); stroke: #fff; stroke-width:2; r:8; }
+
+        /* DEV MODE LABELS - Only visible in DEV MODE */
+        .hud-layer { display:none; }
+        .mode-dev .hud-layer { display: block; }
+
+        .vertex-label { font-family: monospace; font-size: 11px; fill: var(--txt-main); font-weight: bold; pointer-events: none;}
+        .coord-label { font-family: monospace; font-size: 9px; fill: var(--accent); pointer-events: none; opacity:0.6;}
+        .dist-text { font-family: monospace; font-size: 11px; fill: var(--secondary); font-weight:bold; pointer-events: none;}
+
+        #marquee { position: absolute; border: 1px dashed var(--accent); background: var(--marquee-bg); pointer-events: none; display: none; z-index:50;}
+
+        /* TOAST */
+        .toast-msg { position:absolute; bottom:-50px; left:50%; transform:translateX(-50%); background:var(--txt-main); color:#000; padding:10px 20px; border-radius:30px; font-weight:600; font-size:12px; opacity:0; transition:0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index:1000; box-shadow: 0 4px 15px rgba(0,0,0,0.4);}
+        .toast-msg.show { bottom: 85px; opacity:1; }
+
+        /* DEV LAYOUT BEHAVIOR */
+        body.mode-design #right-panel { transform: translateX(400px); opacity:0; pointer-events:none;}
+        body.mode-dev .shape-layer-active { stroke-width: 1 !important; stroke:var(--accent)!important;}
+
+        .dev-badge { background:rgba(255,51,102,0.1); color:var(--danger); padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold;}
+    </style>
+</head>
+<body class="mode-design">
+
+    <!-- CANVAS IN THE BACKGROUND -->
+    <div id="canvas-area">
+        <svg id="blueprint-svg" viewBox="-500 -500 1000 1000">
+            <image id="ref-image" href="vectorify logo.svg" x="-400" y="-400" width="800" height="800" opacity="0.2" preserveAspectRatio="xMidYMid meet" pointer-events="none"></image>
+            <g id="onion-group"></g>
+            <g id="grid-group"></g>
+            <g id="shapes-group"></g>
+            <g id="rulers-group" class="hud-layer"></g> <!-- Dev Only Visually -->
+            <g id="angles-group" class="hud-layer"></g>
+            <g id="vertices-group"></g>
+        </svg>
+        <div id="marquee"></div>
+    </div>
+
+    <!-- UI LAYER OVERLAY -->
+    
+    <div id="top-header" class="glass-panel">
+        <div class="mode-toggle">
+            <button class="mode-btn active" id="btn-mode-design" onclick="switchMode('design')">🎨 Diseño</button>
+            <button class="mode-btn" id="btn-mode-dev" onclick="switchMode('dev')">👨‍💻 Desarrollador</button>
+        </div>
+    </div>
+
+    <div class="top-utils" id="left-utils">
+        <button class="icon-btn" onclick="undo()" title="Deshacer (Ctrl+Z)">↩</button>
+        <button class="icon-btn" onclick="redo()" title="Rehacer (Ctrl+Y)">↪</button>
+    </div>
+
+    <div class="top-utils" id="right-utils">
+        <button class="icon-btn" onclick="toggleFullScreen()" title="Pantalla Completa">⛶</button>
+        <button class="icon-btn" onclick="exportToPNG()" title="Exportar Dibujo PNG HD">📸</button>
+        <button class="icon-btn" onclick="copyShareURL()" title="Generar Link Seguro Compartible">🔗</button>
+    </div>
+
+    <!-- LEFT PANEL: CAPAS (DISEÑO) -->
+    <div id="left-panel" class="glass-panel">
+        <div class="panel-header">
+            Superficies (Capas)
+            <button class="icon-btn" style="width:24px; height:24px; font-size:12px;" onclick="addShapeLayer()">+</button>
+        </div>
+        <div class="panel-body" id="layers-container">
+            <!-- Layers renderizadas vía JS -->
+        </div>
+        
+        <div class="panel-header" style="border-top:1px solid var(--glass-border); border-bottom:none;">Herramientas Visuales</div>
+        <div style="padding:0 15px 15px 15px; display:flex; flex-wrap:wrap; gap:8px;">
+            <button class="secondary-btn" id="btn-isolate" onclick="toggleIsolate()" style="flex:1">👁️ Aislar Capa</button>
+            <button class="secondary-btn" id="btn-onion" onclick="toggleOnion()" style="flex:1">🧅 Fantasma</button>
+            <button class="secondary-btn" id="btn-wireframe" onclick="toggleWireframe()" style="width:100%">🩻 Modo Esqueleto</button>
+        </div>
+    </div>
+
+    <!-- RIGHT PANEL: DATOS Y DEV (DESARROLLADOR) -->
+    <div id="right-panel" class="glass-panel">
+        <div class="panel-header">
+            Consola Developer <span class="dev-badge">PRO</span>
+        </div>
+        <div class="panel-body" style="padding:10px;">
+            <!-- Transformaciones Matrix -->
+            <div style="background:rgba(0,0,0,0.3); border-radius:8px; padding:10px; margin-bottom:10px;">
+                <span style="font-size:11px; color:var(--txt-dim); font-weight:600; display:block; margin-bottom:8px;">MATRIZ DE TRANSFORMACIÓN</span>
+                <div style="display:flex; gap:5px; margin-bottom:6px;">
+                    <button class="secondary-btn" style="flex:1" onclick="mirrorX()">↔ Reflejar X</button>
+                    <button class="secondary-btn" style="flex:1" onclick="mirrorY()">↕ Reflejar Y</button>
+                </div>
+                <div style="display:flex; gap:5px;">
+                    <input type="number" id="rotate-deg" class="modern-input" value="90" style="width:60px; padding:6px;">
+                    <button class="primary-btn" style="flex:1" onclick="rotateLayer()">Girar Capa</button>
+                </div>
+            </div>
+
+            <!-- Code Export -->
+            <div style="background:rgba(0,0,0,0.3); border-radius:8px; padding:10px; margin-bottom:10px; display:flex; flex-direction:column; flex-grow:1;">
+                <span style="font-size:11px; color:var(--txt-dim); font-weight:600; display:block; margin-bottom:8px;">COMPILADOR DE CÓDIGO</span>
+                <select id="code-export-format" class="modern-input" onchange="compileCode()" style="margin-bottom:8px; padding:6px; cursor:pointer;">
+                    <option value="css">CSS Producción (Clip-Path)</option>
+                    <option value="gsap">Animadores GSAP</option>
+                    <option value="svg-html">Etiquetas DOM (SVG)</option>
+                </select>
+                <textarea id="css-editor" class="modern-input" readonly style="flex-grow:1; resize:none; font-size:11px; color:var(--accent);"></textarea>
+                <button class="secondary-btn" style="width:100%; margin-top:8px;" onclick="copyBox('css-editor')">Copiar Script 📋</button>
+            </div>
+            
+            <button class="secondary-btn" onclick="clearStorage()" style="color:var(--danger); border-color:rgba(255,51,102,0.3)">⚠️ Borrar Caché Completa</button>
+        </div>
+    </div>
+
+    <!-- BOTTOM FLOATING TOOLBAR -->
+    <div id="bottom-toolbar" class="glass-panel">
+        <button class="icon-btn" onclick="centerCamera()" title="Centrar Lienzo">🎯</button>
+        <div class="tool-divider"></div>
+        <button class="icon-btn" id="btn-snap-grid" onclick="toggleSnap()" title="Imán Sensorial (Snap)">🧲</button>
+        <button class="icon-btn" id="btn-iso" onclick="toggleIsoGrid()" title="Grilla Isométrica 3D">📐</button>
+        <div class="tool-divider"></div>
+        <div style="display:flex; align-items:center; gap:8px; padding:0 5px;">
+            <span style="font-size:10px; font-weight:600; color:var(--txt-dim);">FOTO BASE</span>
+            <input type="range" id="ref-opacity" min="0" max="0.5" step="0.05" value="0.2" style="width:60px;">
+        </div>
+        <button class="secondary-btn" style="padding:4px 8px; font-size:10px; border-radius:4px" onclick="document.getElementById('upload-ref').click()">Subir PNG</button>
+        <input type="file" id="upload-ref" accept="image/*" style="display:none">
+    </div>
+
+    <!-- UTILITIES -->
+    <canvas id="export-canvas" style="display:none;"></canvas>
+    <div id="toast" class="toast-msg">Mensaje de Notificación</div>
+
+    <script>
+        // --- 1. DATA E INICIALIZACIÓN ---
+        const defaultData = {
+            points: {
+                C_Top: [0, -380], C_TR_Out: [329, -190], C_TR_TipCut: [329, -50], C_TR_InCut: [230, 7], C_TR_In: [230, -133], C_Top_In: [0, -266], C_TL_In: [-230, -133], C_BL_In: [-230, 133], C_Bot_In: [0, 266], C_BR_In: [230, 133], C_BR_InCut: [230, -7], C_BR_TipCut: [329, 50], C_BR_Out: [329, 190], C_Bot: [0, 380], C_BL_Out: [-329, 190], C_TL_Out: [-329, -190],
+                D_Top: [0, -90], D_Right: [100, -32], D_Bot: [0, 25], D_Left: [-100, -32],
+                VL_TopOuter: [-200, -110], VL_TopInner: [-130, -110], VL_InnerCubeJunction: [-20, 36], VL_CubeStemBottom: [-20, 220], VL_BotVertex: [0, 235], VL_OuterSlant: [-100, 60],
+                VR_TopInner: [130, -110], VR_TopOuter: [200, -110], VR_OuterSlant: [100, 60], VR_BotVertex: [0, 235], VR_CubeStemBottom: [20, 220], VR_InnerCubeJunction: [20, 36]
+            },
+            shapes: [
+                { name: "Superficie Principal", color: "#00ffcc", alpha: 0.1, lock: false, vertices: ["C_Top", "C_TR_Out", "C_TR_TipCut", "C_TR_InCut", "C_TR_In", "C_Top_In", "C_TL_In", "C_BL_In", "C_Bot_In", "C_BR_In", "C_BR_InCut", "C_BR_TipCut", "C_BR_Out", "C_Bot", "C_BL_Out", "C_TL_Out"] },
+                { name: "Diamante Central", color: "#ffffff", alpha: 0.25, lock: false, vertices: ["D_Top", "D_Right", "D_Bot", "D_Left"] },
+                { name: "Ala_Izquierda", color: "#ff3366", alpha: 0.2, lock: false, vertices: ["VL_TopOuter", "VL_TopInner", "VL_InnerCubeJunction", "VL_CubeStemBottom", "VL_BotVertex", "VL_OuterSlant"] },
+                { name: "Ala_Derecha", color: "#0088ff", alpha: 0.2, lock: false, vertices: ["VR_TopInner", "VR_TopOuter", "VR_OuterSlant", "VR_BotVertex", "VR_CubeStemBottom", "VR_InnerCubeJunction"] }
+            ]
+        };
+
+        let currentGeometry; const storageKey = 'vectorify_nx_v9'; const hash = window.location.hash.slice(1);
+        try {
+            if(hash) { currentGeometry = JSON.parse(decodeURIComponent(atob(hash))); window.location.hash = ""; } 
+            else { const local = localStorage.getItem(storageKey); currentGeometry = local ? JSON.parse(local) : JSON.parse(JSON.stringify(defaultData)); }
+        } catch(e) { currentGeometry = JSON.parse(JSON.stringify(defaultData)); }
+
+        const svg = document.getElementById('blueprint-svg');
+        let settings = { snapToGrid: false, wireframe: false, isIsoGrid: false, gridSize: 10, onionSkin: false, isolateMode: false, uiMode: 'design' };
+        let svgViewBox = { x: -500, y: -500, w: 1000, h: 1000 };
+        let activeLayerIndex = 0; let selectedVertices = new Set();
+        
+        // --- 2. HISTORY / ENGINE SAVING ---
+        let history = [JSON.stringify(currentGeometry)]; let historyIndex = 0;
+        function pushHistory(msg="") {
+            const state = JSON.stringify(currentGeometry); if (state === history[historyIndex]) return;
+            history = history.slice(0, historyIndex + 1); history.push(state); historyIndex++;
+            localStorage.setItem(storageKey, state); updateUI();
+            if(msg) showToast(msg);
+        }
+        function undo() { if (historyIndex > 0) { historyIndex--; currentGeometry = JSON.parse(history[historyIndex]); updateUI(); localStorage.setItem(storageKey, history[historyIndex]); showToast("Deshacer Acción");} }
+        function redo() { if (historyIndex < history.length - 1) { historyIndex++; currentGeometry = JSON.parse(history[historyIndex]); updateUI(); localStorage.setItem(storageKey, history[historyIndex]); showToast("Rehacer Acción");} }
+        
+        window.addEventListener('keydown', (e) => { 
+            if(document.activeElement.tagName === 'INPUT') return;
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); } 
+            if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); redo(); } 
+        });
+
+        // --- 3. UI RENDER ENGINE (Diseño vs Dev) ---
+        function switchMode(m) {
+            settings.uiMode = m;
+            document.body.className = `mode-${m}`;
+            document.getElementById('btn-mode-design').classList.toggle('active', m==='design');
+            document.getElementById('btn-mode-dev').classList.toggle('active', m==='dev');
+            if(m==='design') selectedVertices.clear(); // Limpia seleccion tecnica
+            renderEngine();
+            showToast(m==='design' ? "🪄 Modo Diseño Limpio Activado" : "👨‍💻 Modo Desarrollador y Cotas Activas");
+        }
+
+        // --- 4. ENGINE GRAFICO (DIBUJO) ---
+        function drawGrid() {
+            const gr = document.getElementById('grid-group'); gr.innerHTML = '';
+            gr.innerHTML += `<line x1="-2000" y1="0" x2="2000" y2="0" class="grid-axis"/>`; gr.innerHTML += `<line x1="0" y1="-2000" x2="0" y2="2000" class="grid-axis"/>`;
+            if(!settings.isIsoGrid) {
+                for(let i = -2000; i <= 2000; i += 50) { if(i===0) continue; gr.innerHTML += `<line x1="-2000" y1="${i}" x2="2000" y2="${i}" class="grid-line"/><line x1="${i}" y1="-2000" x2="${i}" y2="2000" class="grid-line"/>`; }
+            } else {
+                let tan30 = Math.tan(30 * Math.PI / 180);
+                for(let i = -4000; i <= 4000; i += 86.6) {
+                    gr.innerHTML += `<line x1="-2000" y1="${-2000*tan30 + i}" x2="2000" y2="${2000*tan30 + i}" class="grid-line"/>`; gr.innerHTML += `<line x1="-2000" y1="${2000*tan30 + i}" x2="2000" y2="${-2000*tan30 + i}" class="grid-line"/>`; 
+                }
+            }
+        }
+
+        function renderOnion() {
+            const gr = document.getElementById('onion-group'); gr.innerHTML = '';
+            if(!settings.onionSkin || historyIndex < 1) return;
+            const pastGeo = JSON.parse(history[historyIndex - 1]);
+            pastGeo.shapes.forEach(shape => {
+                const pCoords = shape.vertices.map(v => pastGeo.points[v] ? pastGeo.points[v].join(',') : '').join(' ');
+                gr.innerHTML += `<polygon points="${pCoords}" class="onion-path" />`;
+            });
+        }
+
+        function updateViewBox() { svg.setAttribute('viewBox', `${svgViewBox.x} ${svgViewBox.y} ${svgViewBox.w} ${svgViewBox.h}`); }
+
+        function renderEngine() {
+            const pGroup = document.getElementById('shapes-group'); const vGroup = document.getElementById('vertices-group');
+            const rGroup = document.getElementById('rulers-group');
+            pGroup.innerHTML = ''; vGroup.innerHTML = ''; rGroup.innerHTML = '';
+            const p = currentGeometry.points;
+
+            currentGeometry.shapes.forEach((shape, idx) => {
+                if(settings.isolateMode && idx !== activeLayerIndex) return; 
+                
+                const shapePts = shape.vertices.map(v => p[v]).filter(v => v);
+                const pathCoords = shapePts.map(pt => pt.join(',')).join(' ');
+                let rgba = shape.color || '#00ffcc';
+                if(!settings.wireframe) {
+                    let hex = shape.color.replace('#',''); let rgb = [parseInt(hex.slice(0,2),16), parseInt(hex.slice(2,4),16), parseInt(hex.slice(4,6),16)];
+                    rgba = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${shape.alpha||0.3})`;
+                }
+
+                pGroup.innerHTML += `<polygon points="${pathCoords}" class="shape-path ${idx === activeLayerIndex ? 'shape-layer-active' : ''}" fill="${rgba}" stroke="${shape.color || '#00ffcc'}"/>`;
+                
+                if (idx === activeLayerIndex && shapePts.length >= 3 && settings.uiMode==='dev') {
+                    for(let i = 0; i < shape.vertices.length; i++) {
+                        const prevObj = p[shape.vertices[(i === 0) ? shape.vertices.length - 1 : i - 1]]; const currObj = p[shape.vertices[i]]; const nextObj = p[shape.vertices[(i + 1) % shape.vertices.length]];
+                        if(prevObj && currObj && nextObj) {
+                            const dist = Math.hypot(currObj[0]-nextObj[0], currObj[1]-nextObj[1]).toFixed(0);
+                            const midX = (currObj[0]+nextObj[0])/2; const midY = (currObj[1]+nextObj[1])/2;
+                            const len = Math.hypot(nextObj[0]-currObj[0], nextObj[1]-currObj[1]);
+                            rGroup.innerHTML += `<line x1="${currObj[0]}" y1="${currObj[1]}" x2="${nextObj[0]}" y2="${nextObj[1]}" stroke="#ff3366" stroke-width="1" stroke-dasharray="2,2"/>`;
+                            rGroup.innerHTML += `<text x="${midX + (-(nextObj[1]-currObj[1])/len)*15}" y="${midY + ((nextObj[0]-currObj[0])/len)*15 + 4}" class="dist-text" text-anchor="middle">${dist}px</text>`;
+                        }
+                    }
+                }
+            });
+
+            const vr = svgViewBox.w / 200; const fs = svgViewBox.w / 150; 
+            
+            Object.keys(p).forEach(pName => {
+                const [x, y] = p[pName];
+                let renderP = true;
+                if(settings.isolateMode && (!currentGeometry.shapes[activeLayerIndex] || !currentGeometry.shapes[activeLayerIndex].vertices.includes(pName))) renderP = false;
+                
+                if(renderP) {
+                    const isSelect = selectedVertices.has(pName);
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('cx', x); circle.setAttribute('cy', y); circle.setAttribute('r', draggingVertex === pName ? vr*2.5 : vr);
+                    circle.setAttribute('class', `vertex ${isSelect ? 'selected' : ''} ${draggingVertex === pName ? 'dragging' : ''}`);
+                    circle.setAttribute('data-name', pName);
+                    
+                    if (settings.uiMode === 'dev') vGroup.innerHTML += `<text x="${x+vr*2}" y="${y-vr}" class="vertex-label" style="font-size:${fs}px">${pName}</text>`;
+                    vGroup.appendChild(circle);
+                }
+            });
+            renderOnion(); compileCode();
+        }
+
+        // --- 5. UI Y LAYERS ---
+        function showToast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 3000); }
+        
+        function renderLayers() {
+            let s = currentGeometry.shapes; let html = '';
+            for(let i=0; i<s.length; i++) {
+                html += `
+                <div class="layer-item ${i === activeLayerIndex ? 'active' : ''}" onclick="selectLayer(${i})">
+                    <div class="layer-head">
+                        <input type="color" class="layer-color-pick" value="${s[i].color || '#00ffcc'}" onchange="updateShapeProp(${i}, 'color', this.value)" onclick="event.stopPropagation()">
+                        <input type="text" value="${s[i].name}" onchange="updateShapeProp(${i}, 'name', this.value)" onclick="event.stopPropagation()">
+                        <button class="icon-btn ${s[i].lock?'active':''}" style="width:22px; height:22px; font-size:10px; border:none; background:transparent;" onclick="event.stopPropagation(); currentGeometry.shapes[${i}].lock = !currentGeometry.shapes[${i}].lock; pushHistory();" title="Bloquear">${s[i].lock ? '🔒' : '🔓'}</button>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <input type="range" min="0" max="1" step="0.05" value="${s[i].alpha!==undefined?s[i].alpha:0.3}" onclick="event.stopPropagation()" onchange="updateShapeProp(${i}, 'alpha', this.value)">
+                        <div style="flex-grow:1"></div>
+                        <button class="layer-btn" onclick="event.stopPropagation(); moveLayer(${i}, -1)">↑</button>
+                        <button class="layer-btn" onclick="event.stopPropagation(); moveLayer(${i}, 1)">↓</button>
+                        <button class="layer-btn" style="color:var(--danger)" onclick="event.stopPropagation(); deleteLayer(${i})">X</button>
+                    </div>
+                </div>`;
+            }
+            document.getElementById('layers-container').innerHTML = html;
+        }
+
+        function selectLayer(i) { activeLayerIndex = i; renderLayers(); renderEngine(); }
+        function updateShapeProp(i, prop, val) { currentGeometry.shapes[i][prop] = (prop==='alpha') ? parseFloat(val) : val; pushHistory(); }
+        function moveLayer(i, dir) {
+            if(i + dir < 0 || i + dir >= currentGeometry.shapes.length) return;
+            const t = currentGeometry.shapes[i]; currentGeometry.shapes[i] = currentGeometry.shapes[i + dir]; currentGeometry.shapes[i + dir] = t;
+            if(activeLayerIndex === i) activeLayerIndex += dir; else if (activeLayerIndex === i + dir) activeLayerIndex -= dir;
+            pushHistory();
+        }
+        function addShapeLayer() { currentGeometry.shapes.push({ name: "Cuerpo_" + Date.now().toString().substr(-2), color: "#fff", alpha: 0.3, lock: false, vertices: [] }); activeLayerIndex = currentGeometry.shapes.length - 1; pushHistory(); }
+        function deleteLayer(i) { currentGeometry.shapes.splice(i, 1); activeLayerIndex = 0; pushHistory(); }
+
+        // --- 6. TRANSFORMACIONES DEV MATRIZ ---
+        function mirrorX() {
+            if(currentGeometry.shapes[activeLayerIndex].lock) return showToast("❌ Capa Protegida");
+            currentGeometry.shapes[activeLayerIndex].vertices.forEach(v => { if(currentGeometry.points[v]) currentGeometry.points[v][0] *= -1; });
+            pushHistory("↔ Espejo Horizontal Aplicado");
+        }
+        function mirrorY() {
+            if(currentGeometry.shapes[activeLayerIndex].lock) return showToast("❌ Capa Protegida");
+            currentGeometry.shapes[activeLayerIndex].vertices.forEach(v => { if(currentGeometry.points[v]) currentGeometry.points[v][1] *= -1; });
+            pushHistory("↕ Espejo Vertical Aplicado");
+        }
+        function rotateLayer() {
+            const deg = parseFloat(document.getElementById('rotate-deg').value); if(!deg) return; const rad = deg * Math.PI/180;
+            const sh = currentGeometry.shapes[activeLayerIndex]; if(sh.lock) return showToast("❌ Capa Protegida");
+            let cx=0, cy=0, qty=0;
+            sh.vertices.forEach(v => { if(currentGeometry.points[v]){ cx+=currentGeometry.points[v][0]; cy+=currentGeometry.points[v][1]; qty++; }});
+            cx/=qty; cy/=qty;
+            sh.vertices.forEach(v => {
+                if(currentGeometry.points[v]){
+                    let nx = Math.round((currentGeometry.points[v][0]-cx)*Math.cos(rad) - (currentGeometry.points[v][1]-cy)*Math.sin(rad) + cx);
+                    let ny = Math.round((currentGeometry.points[v][0]-cx)*Math.sin(rad) + (currentGeometry.points[v][1]-cy)*Math.cos(rad) + cy);
+                    currentGeometry.points[v] = [nx, ny];
+                }
+            });
+            pushHistory(`🔄 Geometría Girada: ${Math.round(deg)}°`);
+        }
+
+        // --- 7. EXPORT PRO ---
+        function compileCode() {
+            if(settings.uiMode !== 'dev') return;
+            const format = document.getElementById('code-export-format').value;
+            let finalCode = "";
+            if (format === 'css') {
+                finalCode = `/* Vectorify Base Engine */\n.vector-container {\n  width: 500px; aspect-ratio: 1/1; position:relative;\n}\n`;
+                currentGeometry.shapes.forEach(s => {
+                    if(s.vertices.length < 3) return;
+                    let obj = s.vertices.map(v => currentGeometry.points[v] ? `${((currentGeometry.points[v][0]+500)/10).toFixed(2)}% ${((currentGeometry.points[v][1]+500)/10).toFixed(2)}%` : '0 0').join(', ');
+                    finalCode += `\n.${s.name.replace(/[^a-zA-Z0-9]/g,'-').toLowerCase()} { position: absolute; inset:0; background: ${s.color}; clip-path: polygon(${obj}); opacity: ${s.alpha||1};}`;
+                });
+            } else if (format === 'gsap') { 
+                finalCode = `// GSAP ANIMATION TARGETS\nconst logoFrames = {\n`;
+                currentGeometry.shapes.forEach(s => {
+                    let pathStr = s.vertices.map(v => currentGeometry.points[v]?`${currentGeometry.points[v][0]},${currentGeometry.points[v][1]}`:'0,0').join(' ');
+                    finalCode += `  ${s.name.replace(/[^A-Za-z0-9]/g, '')}: "${pathStr}",\n`;
+                });
+                finalCode += `};\n// gsap.to(".logo", { attr: { points: logoFrames.Main } });`;
+            } else { 
+                finalCode = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${svgViewBox.x} ${svgViewBox.y} ${svgViewBox.w} ${svgViewBox.h}">\n`;
+                currentGeometry.shapes.forEach(shape => {
+                    const obj = shape.vertices.map(v => currentGeometry.points[v] ? currentGeometry.points[v].join(',') : '').join(' ');
+                    finalCode += `  <polygon id="${shape.name}" points="${obj}" fill="${shape.color}" opacity="${shape.alpha}"/>\n`;
+                });
+                finalCode += "</svg>";
+            }
+            document.getElementById('css-editor').value = finalCode;
+        }
+
+        // --- 8. DRAG & MARQUEE ENGINE ---
+        let draggingVertex = null; let isPanning = false; let startPan = {x:0, y:0}; let startViewBox = {...svgViewBox};
+        let isMarquee = false; let marqueeStart = {x:0,y:0}; let dragBasePositions = {};
+
+        function getMousePositionSVG(evt) { const CTM = svg.getScreenCTM(); return { x: (evt.clientX - CTM.e) / CTM.a, y: (evt.clientY - CTM.f) / CTM.d }; }
+
+        svg.addEventListener('dblclick', (e) => {
+            if (e.target.classList.contains('vertex')) {
+                const pName = e.target.getAttribute('data-name'); delete currentGeometry.points[pName];
+                currentGeometry.shapes.forEach(shape => { shape.vertices = shape.vertices.filter(v => v !== pName); }); pushHistory("Nodo Eliminado Reajustando trazo");
+            } else {
+                if(currentGeometry.shapes[activeLayerIndex] && currentGeometry.shapes[activeLayerIndex].lock) return showToast("❌ Imposible. Capa en Seguridad.");
+                const pos = getMousePositionSVG(e); let n = 1; while(currentGeometry.points[`N_${n}`]) n++; const nw = `N_${n}`;
+                currentGeometry.points[nw] = [Math.round(pos.x), Math.round(pos.y)];
+                if(currentGeometry.shapes[activeLayerIndex]) currentGeometry.shapes[activeLayerIndex].vertices.push(nw); pushHistory(`Nodo Fresco inyectado: ${nw}`);
+            }
+        });
+
+        svg.addEventListener('mousedown', (e) => {
+            if (e.button === 1 || e.buttons === 4 || e.altKey) { // Pan
+                isPanning = true; document.getElementById('canvas-area').classList.add('panning'); startPan = { x: e.clientX, y: e.clientY }; startViewBox = { ...svgViewBox }; return;
+            }
+            if (e.target.classList.contains('vertex')) {
+                draggingVertex = e.target.getAttribute('data-name');
+                if(!selectedVertices.has(draggingVertex)) { if(!e.shiftKey) selectedVertices.clear(); selectedVertices.add(draggingVertex); }
+                selectedVertices.forEach(v => { if(currentGeometry.points[v]) dragBasePositions[v] = { x: currentGeometry.points[v][0], y: currentGeometry.points[v][1] }; });
+                startPan = getMousePositionSVG(e);
+            } else if (settings.uiMode === 'dev') { // Solo marquee en Modo DEV para no confundir diseñador
+                if(!e.shiftKey) selectedVertices.clear();
+                isMarquee = true; marqueeStart = {x: e.clientX, y: e.clientY};
+                const m = document.getElementById('marquee'); m.style.left = e.clientX + 'px'; m.style.top = e.clientY + 'px'; m.style.width = '0px'; m.style.height = '0px'; m.style.display = 'block';
+                renderEngine();
+            }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (isPanning) { svgViewBox.x = startViewBox.x - (e.clientX - startPan.x) * (svgViewBox.w / svg.clientWidth); svgViewBox.y = startViewBox.y - (e.clientY - startPan.y) * (svgViewBox.h / svg.clientHeight); updateViewBox(); return; }
+            if (isMarquee) {
+                const m = document.getElementById('marquee'); m.style.left = Math.min(e.clientX, marqueeStart.x) + 'px'; m.style.top = Math.min(e.clientY, marqueeStart.y) + 'px';
+                m.style.width = Math.abs(e.clientX - marqueeStart.x) + 'px'; m.style.height = Math.abs(e.clientY - marqueeStart.y) + 'px';
+            }
+            if (draggingVertex) {
+                const pos = getMousePositionSVG(e); let dx = pos.x - startPan.x; let dy = pos.y - startPan.y;
+                if(e.shiftKey && selectedVertices.size === 1) { if(Math.abs(dx) > Math.abs(dy)) dy = 0; else dx = 0; } // Recto
+
+                selectedVertices.forEach(v => {
+                    if(!dragBasePositions[v]) return;
+                    let nx = dragBasePositions[v].x + dx; let ny = dragBasePositions[v].y + dy;
+                    if (settings.snapToGrid) { nx = Math.round(nx / settings.gridSize) * settings.gridSize; ny = Math.round(ny / settings.gridSize) * settings.gridSize; } else { nx = Math.round(nx); ny = Math.round(ny); }
+                    currentGeometry.points[v] = [nx, ny];
+                });
+                renderEngine();
+            }
+        });
+
+        window.addEventListener('mouseup', (e) => {
+            if (draggingVertex) { draggingVertex = null; pushHistory(); } 
+            if (isMarquee) {
+                isMarquee = false; const m = document.getElementById('marquee'); m.style.display = 'none';
+                const svgRect = svg.getBoundingClientRect(); const CTM = svg.getScreenCTM();
+                const rect = { left: (Math.min(e.clientX, marqueeStart.x) - CTM.e) / CTM.a, right: (Math.max(e.clientX, marqueeStart.x) - CTM.e) / CTM.a, top: (Math.min(e.clientY, marqueeStart.y) - CTM.f) / CTM.d, bottom: (Math.max(e.clientY, marqueeStart.y) - CTM.f) / CTM.d };
+                Object.keys(currentGeometry.points).forEach(p => { const [x,y] = currentGeometry.points[p]; if(x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) selectedVertices.add(p); });
+                renderEngine();
+            }
+            if (isPanning) { isPanning = false; document.getElementById('canvas-area').classList.remove('panning'); }
+        });
+
+        // NUDGE ARROW KEYS
+        window.addEventListener('keydown', (e) => { 
+            if(document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return;
+            if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key) && selectedVertices.size > 0 && settings.uiMode==='dev') {
+                e.preventDefault(); const speed = e.shiftKey ? 10 : 1;
+                selectedVertices.forEach(v => {
+                    if(e.key==='ArrowUp') currentGeometry.points[v][1] -= speed; else if(e.key==='ArrowDown') currentGeometry.points[v][1] += speed;
+                    else if(e.key==='ArrowLeft') currentGeometry.points[v][0] -= speed; else if(e.key==='ArrowRight') currentGeometry.points[v][0] += speed;
+                });
+                renderEngine();
+            }
+        });
+        window.addEventListener('keyup', (e) => { if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key) && selectedVertices.size > 0) pushHistory(); });
+
+        svg.addEventListener('wheel', (e) => {
+            e.preventDefault(); const pos = getMousePositionSVG(e); const factor = e.deltaY > 0 ? 1.15 : 0.85;
+            svgViewBox.x = pos.x - (pos.x - svgViewBox.x) * factor; svgViewBox.y = pos.y - (pos.y - svgViewBox.y) * factor;
+            svgViewBox.w *= factor; svgViewBox.h *= factor; updateViewBox(); renderEngine();
+        });
+
+        // --- 9. UTILS MENU DE HERRAMIENTAS ---
+        function clearStorage() { if(confirm("¿Eliminar diseño y restaurar vectores por defecto?")) { localStorage.removeItem(storageKey); window.location.reload(); } }
+        function copyBox(id) { document.getElementById(id).select(); document.execCommand('copy'); showToast("Códice copiado 📋"); }
+        function copyShareURL() { window.location.hash = btoa(encodeURIComponent(JSON.stringify(currentGeometry))); navigator.clipboard.writeText(window.location.href); showToast("URL Encriptada Creada. Compártela."); }
+
+        function toggleIsoGrid() { settings.isIsoGrid = !settings.isIsoGrid; drawGrid(); document.getElementById('btn-iso').classList.toggle('active'); showToast(settings.isIsoGrid?"Geometría Isométrica 3D Activa":"Geometría Plana Activa");}
+        function toggleSnap() { settings.snapToGrid = !settings.snapToGrid; document.getElementById('btn-snap-grid').classList.toggle('active'); showToast(settings.snapToGrid?"Magnetismo Activado":"Movimiento Fluido Activado");}
+        function toggleWireframe() { settings.wireframe = !settings.wireframe; document.getElementById('btn-wireframe').classList.toggle('active'); if(settings.wireframe) svg.classList.add('wireframe-mode'); else svg.classList.remove('wireframe-mode'); }
+        function toggleIsolate() { settings.isolateMode = !settings.isolateMode; document.getElementById('btn-isolate').classList.toggle('active'); renderEngine(); }
+        function toggleOnion() { settings.onionSkin = !settings.onionSkin; document.getElementById('btn-onion').classList.toggle('active'); renderEngine(); }
+        function centerCamera() { svgViewBox = { x: -500, y: -500, w: 1000, h: 1000 }; updateViewBox(); renderEngine(); }
+        function toggleFullScreen() { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
+
+        document.getElementById('ref-opacity').addEventListener('input', (e) => { document.getElementById('ref-image').setAttribute('opacity', e.target.value); });
+        document.getElementById('upload-ref').addEventListener('change', (e) => { if(e.target.files && e.target.files[0]) { const reader = new FileReader(); reader.onload = function(ev) { document.getElementById('ref-image').setAttribute('href', ev.target.result); }; reader.readAsDataURL(e.target.files[0]); } });
+
+        function exportToPNG() {
+            const canvas = document.getElementById('export-canvas'); const ctx = canvas.getContext('2d');
+            const cw = 2000; const ch = 2000; canvas.width = cw; canvas.height = ch;
+            let cleanSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${cw}" height="${ch}" viewBox="-500 -500 1000 1000">\n`;
+            currentGeometry.shapes.forEach(s => { const pObj = s.vertices.map(v => currentGeometry.points[v] ? currentGeometry.points[v].join(',') : '').join(' '); cleanSVG += `  <polygon points="${pObj}" fill="${s.color}" opacity="${s.alpha}"/>\n`; });
+            cleanSVG += "</svg>";
+            const img = new Image(); img.onload = function() { ctx.clearRect(0,0,cw,ch); ctx.drawImage(img,0,0); const a = document.createElement('a'); a.href = canvas.toDataURL("image/png"); a.download = "dibujo-vectorify.png"; a.click(); };
+            img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(cleanSVG))); showToast("Obra de Arte exportada a PNG");
+        }
+
+        function updateUI() { renderLayers(); renderEngine(); }
+        updateViewBox(); drawGrid(); updateUI();
+    </script>
+</body>
+</html>

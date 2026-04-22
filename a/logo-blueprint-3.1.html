@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vectorify Blueprint 3.0 | Golden Ratio Edition</title>
+    <title>Vectorify Blueprint 3.1 | V Original Refinada</title>
     <style>
         :root {
             --bg: #05070a;
@@ -15,7 +15,7 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-            font-family: 'Inter', system-ui, sans-serif; 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
             background: var(--bg); 
             color: var(--text);
             display: flex;
@@ -29,27 +29,23 @@
             border-right: 1px solid #333;
             display: flex;
             flex-direction: column;
-            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
             z-index: 100;
         }
 
         .header {
             padding: 25px;
             background: #1a1e26;
-            border-bottom: 4px solid var(--phi);
+            border-bottom: 4px solid var(--accent);
         }
-        .header h1 { font-size: 1.1rem; color: var(--phi); letter-spacing: 2px; text-transform: uppercase; }
-        .header p { font-size: 0.75rem; color: #888; margin-top: 5px; }
+        .header h1 { font-size: 1.1rem; color: var(--accent); letter-spacing: 2px; }
 
         .analysis {
             padding: 20px;
             font-size: 0.8rem;
             line-height: 1.6;
             border-bottom: 1px solid #333;
-            background: #0d1015;
         }
         .analysis b { color: var(--accent); }
-        .analysis ul { margin-top: 10px; padding-left: 15px; }
 
         #export-area {
             background: #000;
@@ -57,32 +53,27 @@
             font-family: 'Fira Code', monospace;
             font-size: 9px;
             width: 100%;
-            height: 200px;
+            height: 250px;
             padding: 15px;
             border: none;
             resize: none;
             outline: none;
         }
 
-        #blueprint-area { flex-grow: 1; position: relative; background: radial-gradient(circle at center, #0d1117 0%, #05070a 100%); }
-        svg { width: 100%; height: 100%; cursor: crosshair; }
+        #blueprint-area { flex-grow: 1; position: relative; }
+        svg { width: 100%; height: 100%; }
 
-        /* Estilos del Logo Dorado/Premium */
-        .shape-outer { fill: rgba(255,255,255,0.03); stroke: #fff; stroke-width: 2; }
         .logo-fill { fill: #fff; stroke: none; }
-        .line-y { stroke: #fff; stroke-width: 20; stroke-linecap: round; } /* GROSOR AUMENTADO */
+        .line-y { stroke: #fff; stroke-width: 20; stroke-linecap: round; } 
 
-        /* Guías de Proporción */
-        .guide-phi { stroke: var(--phi); stroke-width: 1; stroke-dasharray: 5,5; fill: none; opacity: 0.5; }
-        
-        .vertex { fill: var(--phi); stroke: #000; stroke-width: 1; cursor: grab; }
+        .vertex { fill: var(--accent); cursor: grab; }
         .label { font-size: 10px; fill: #666; font-family: monospace; pointer-events: none; }
 
         .hud-top {
             position: absolute;
             top: 20px; right: 20px;
             background: rgba(0,0,0,0.8);
-            border: 1px solid var(--phi);
+            border: 1px solid var(--accent);
             padding: 15px;
             border-radius: 8px;
             font-size: 0.75rem;
@@ -93,33 +84,27 @@
 
     <div id="sidebar">
         <div class="header">
-            <h1>Engine 3.0: Golden Ratio</h1>
-            <p>Refinamiento Matemático y Estético</p>
+            <h1>Engine 3.1: V-Core Fix</h1>
         </div>
 
         <div class="analysis">
-            <h3>Análisis de Proporción:</h3>
+            <h3>Estado del Refinamiento:</h3>
             <ul>
-                <li><b>Radio Áureo:</b> Relación 1.618 entre exterior e interior.</li>
-                <li><b>Peso Visual:</b> Grosor de "C" aumentado a 153px para solidez.</li>
-                <li><b>Eje Y (Stem):</b> Grosor aumentado a <b>20px</b> para integración.</li>
-                <li><b>Armonía:</b> Puntos alineados a cuadrícula radial.</li>
+                <li><b>V-Structure:</b> Restaurada a 5 puntos por ala (Conexión central).</li>
+                <li><b>Grosor Y:</b> Mantenido en <b>20px</b> para estabilidad estética.</li>
+                <li><b>Flechas:</b> Ángulos mantenidos para impacto visual.</li>
             </ul>
         </div>
 
         <div style="padding: 20px;">
-            <p style="font-size: 0.7rem; color: #555; margin-bottom: 10px;">CÓDIGO SVG OPTIMIZADO (COPIAR PARA USO):</p>
+            <p style="font-size: 0.7rem; color: #555; margin-bottom: 10px;">CÓDIGO SVG EXPORTABLE:</p>
             <textarea id="export-area" readonly></textarea>
         </div>
     </div>
 
     <div id="blueprint-area">
-        <div class="hud-top">Escala Radial: <b>Golden ($\phi$)</b></div>
+        <div class="hud-top">Visualización: <b>V-Original + Y-Engrosada</b></div>
         <svg id="blueprint-svg" viewBox="-500 -500 1000 1000">
-            <!-- Guías de Círculos Áureos -->
-            <circle cx="0" cy="0" r="400" class="guide-phi" />
-            <circle cx="0" cy="0" r="247" class="guide-phi" />
-            
             <g id="shapes-group"></g>
             <g id="y-group"></g>
             <g id="vertices-group"></g>
@@ -127,43 +112,23 @@
     </div>
 
     <script>
-        // Coordenadas basadas en R=400 y r=247 (Golden Ratio)
         let geom = {
             "points": {
-                "C_Top": [0, -400],
-                "C_TR_Out": [346, -200],
-                "C_TR_In": [214, -124],
-                "C_Top_In": [0, -247],
-                "C_TL_In": [-214, -124],
-                "C_TL_Out": [-346, -200],
-                "C_BL_Out": [-346, 200],
-                "C_BL_In": [-214, 124],
-                "C_Bot_In": [0, 247],
-                "C_BR_In": [214, 124],
-                "C_BR_Out": [346, 200],
-                "C_Bot": [0, 400],
-                
-                "Y_Center": [0, 0],
-                "Y_TopRight": [124, -72],
-                "Y_TopLeft": [-124, -72],
-                "Y_Bottom": [0, 247],
-                
-                "VL_ArrowTip": [-90, -124],
-                "VL_ArrowBase": [-124, -72],
-                "VL_Bot": [0, 247],
-                "VL_Outer": [-214, -124],
-
-                "VR_ArrowTip": [90, -124],
-                "VR_ArrowBase": [124, -72],
-                "VR_Bot": [0, 247],
-                "VR_Outer": [214, -124]
+                "C_Top": [0, -390], "C_TR_Out": [338, -195], "C_TR_InCut": [225, -130],
+                "C_Top_In": [0, -260], "C_TL_In": [-225, -130], "C_TL_Out": [-338, -195],
+                "C_BL_Out": [-338, 195], "C_BL_In": [-225, 130], "C_Bot_In": [0, 260],
+                "C_BR_InCut": [225, 130], "C_BR_Out": [338, 195], "C_Bot": [0, 390],
+                "Y_Center": [0, 0], "VL_TopInner": [-125, -75], "VR_TopInner": [125, -75],
+                "VR_InnerCubeJunction": [0, 130], "VL_TopOuter": [-70, -130],
+                "VL_BotVertex": [0, 260], "VL_OuterSlant": [-225, -130],
+                "VR_TopOuter": [70, -130], "VR_BotVertex": [0, 260], "VR_OuterSlant": [225, -130]
             },
             "shapes": [
-                { "name": "Outer_C", "vertices": ["C_Top", "C_TR_Out", "C_TR_In", "C_Top_In", "C_TL_In", "C_BL_In", "C_Bot_In", "C_BR_In", "C_BR_Out", "C_Bot", "C_BL_Out", "C_TL_Out"] },
-                { "name": "V_Left", "vertices": ["VL_ArrowTip", "VL_ArrowBase", "Y_Bottom", "VL_Bot", "VL_Outer"] },
-                { "name": "V_Right", "vertices": ["VR_ArrowTip", "VR_ArrowBase", "Y_Bottom", "VR_Bot", "VR_Outer"] }
+                { "name": "Outer_C", "vertices": ["C_Top", "C_TR_Out", "C_TR_InCut", "C_Top_In", "C_TL_In", "C_BL_In", "C_Bot_In", "C_BR_InCut", "C_BR_Out", "C_Bot", "C_BL_Out", "C_TL_Out"] },
+                { "name": "V_Left", "vertices": ["VL_TopOuter", "VL_TopInner", "VR_InnerCubeJunction", "VL_BotVertex", "VL_OuterSlant"] },
+                { "name": "V_Right", "vertices": ["VR_TopOuter", "VR_TopInner", "VR_InnerCubeJunction", "VR_BotVertex", "VR_OuterSlant"] }
             ],
-            "yLines": [["Y_Center", "Y_Bottom"], ["Y_Center", "Y_TopRight"], ["Y_Center", "Y_TopLeft"]]
+            "yLines": [["Y_Center", "VR_InnerCubeJunction"], ["Y_Center", "VL_TopInner"], ["Y_Center", "VR_TopInner"]]
         };
 
         const svg = document.getElementById('blueprint-svg');
@@ -174,23 +139,19 @@
             const yg = document.getElementById('y-group');
             const vg = document.getElementById('vertices-group');
             sg.innerHTML = ''; yg.innerHTML = ''; vg.innerHTML = '';
-
             const pts = geom.points;
 
-            // Render Shapes
             geom.shapes.forEach(s => {
                 const path = s.vertices.map(v => pts[v].join(',')).join(' ');
                 sg.innerHTML += `<polygon points="${path}" class="logo-fill" />`;
             });
 
-            // Render Y Structural Lines
             geom.yLines.forEach(line => {
                 const p1 = pts[line[0]];
                 const p2 = pts[line[1]];
                 yg.innerHTML += `<line x1="${p1[0]}" y1="${p1[1]}" x2="${p2[0]}" y2="${p2[1]}" class="line-y" />`;
             });
 
-            // Render Vertices for control
             Object.keys(pts).forEach(pName => {
                 const [x,y] = pts[pName];
                 vg.innerHTML += `<circle cx="${x}" cy="${y}" r="3" class="vertex" />`;

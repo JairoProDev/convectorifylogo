@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vectorify CAD v2.3 | Exportador SVG Pro</title>
+    <style>
+        :root {
+            --bg: #0b0d11;
+            --panel: #161920;
+            --accent: #00ffcc;
+            --vertex: #ff0055;
+            --text: #ffffff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            background: var(--bg); 
+            color: var(--text);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #sidebar {
+            width: 400px;
+            background: var(--panel);
+            border-right: 2px solid #333;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+            z-index: 100;
+        }
+
+        .header {
+            padding: 20px;
+            background: #1e222b;
+            border-bottom: 3px solid var(--accent);
+        }
+        .header h1 { font-size: 1.2rem; color: var(--accent); }
+
+        .section {
+            padding: 15px;
+            border-bottom: 1px solid #333;
+        }
+        .section h3 { font-size: 0.8rem; color: #888; margin-bottom: 10px; text-transform: uppercase; }
+
+        #export-area {
+            background: #000;
+            color: #00ffcc;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            width: 100%;
+            height: 120px;
+            padding: 10px;
+            border: 1px solid #444;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            overflow-y: auto;
+        }
+
+        button {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 10px;
+            width: 100%;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+        button:hover { filter: brightness(1.1); }
+
+        #blueprint-area { flex-grow: 1; position: relative; background: #080a0d; }
+        svg { width: 100%; height: 100%; cursor: crosshair; }
+
+        .grid-line { stroke: rgba(255, 255, 255, 0.03); stroke-width: 1; pointer-events: none;}
+        .grid-axis { stroke: rgba(0, 255, 204, 0.1); stroke-width: 1.5; pointer-events: none;}
+
+        .shape-path {
+            fill: rgba(0, 255, 204, 0.05);
+            stroke: var(--accent);
+            stroke-width: 3;
+        }
+        .line-y { stroke: var(--accent); stroke-width: 2.5; stroke-linecap: round; }
+
+        .vertex { fill: var(--vertex); stroke: #fff; stroke-width: 2; cursor: grab; }
+        .vertex.dragging { fill: var(--accent); r: 10; }
+
+        .label { font-size: 10px; fill: #aaa; pointer-events: none; font-family: monospace; }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <div class="header">
+            <h1>Engine v2.3: SVG Ready</h1>
+        </div>
+
+        <div class="section">
+            <h3>Exportación Mínima</h3>
+            <p style="font-size: 0.75rem; color: #ccc;">Este es el código que puedes usar en cualquier lado:</p>
+            <div id="export-area" readonly>Cargando código SVG...</div>
+            <button onclick="copySVG()">Copiar Código SVG</button>
+        </div>
+
+        <div class="section">
+            <h3>Datos Geométricos (JSON)</h3>
+            <textarea id="code-editor" style="width:100%; height:200px; background:#111; color:#aaa; font-size:10px; border:none; padding:10px;" readonly></textarea>
+        </div>
+        
+        <div class="section" style="font-size: 0.7rem; color: #666;">
+            * Se ha corregido la simetría de VR_TopOuter con VL_TopOuter para precisión total.
+        </div>
+    </div>
+
+    <div id="blueprint-area">
+        <svg id="blueprint-svg" viewBox="-500 -500 1000 1000">
+            <g id="grid-group"></g>
+            <g id="shapes-group"></g>
+            <g id="y-group"></g>
+            <g id="vertices-group"></g>
+        </svg>
+    </div>
+
+    <script>
+        let geom = {
+            "points": {
+                "C_Top": [0, -390], "C_TR_Out": [338, -195], "C_TR_InCut": [225, -130],
+                "C_Top_In": [0, -260], "C_TL_In": [-225, -130], "C_TL_Out": [-338, -195],
+                "C_BL_Out": [-338, 195], "C_BL_In": [-225, 130], "C_Bot_In": [0, 260],
+                "C_BR_InCut": [225, 130], "C_BR_Out": [338, 195], "C_Bot": [0, 390],
+                "Y_Center": [0, 0], "VL_TopInner": [-125, -75], "VR_TopInner": [125, -75],
+                "VR_InnerCubeJunction": [0, 130], "VL_TopOuter": [-70, -130],
+                "VL_BotVertex": [0, 260], "VL_OuterSlant": [-225, -130],
+                "VR_TopOuter": [70, -130], "VR_BotVertex": [0, 260], "VR_OuterSlant": [225, -130]
+            },
+            "shapes": [
+                { "name": "Outer_C", "vertices": ["C_Top", "C_TR_Out", "C_TR_InCut", "C_Top_In", "C_TL_In", "C_BL_In", "C_Bot_In", "C_BR_InCut", "C_BR_Out", "C_Bot", "C_BL_Out", "C_TL_Out"] },
+                { "name": "V_Left", "vertices": ["VL_TopOuter", "VL_TopInner", "VR_InnerCubeJunction", "VL_BotVertex", "VL_OuterSlant"] },
+                { "name": "V_Right", "vertices": ["VR_TopOuter", "VR_TopInner", "VR_InnerCubeJunction", "VR_BotVertex", "VR_OuterSlant"] }
+            ],
+            "yLines": [["Y_Center", "VR_InnerCubeJunction"], ["Y_Center", "VL_TopInner"], ["Y_Center", "VR_TopInner"]]
+        };
+
+        const svg = document.getElementById('blueprint-svg');
+        const exportArea = document.getElementById('export-area');
+        const editor = document.getElementById('code-editor');
+        let draggingPoint = null;
+
+        function init() {
+            drawGrid();
+            render();
+        }
+
+        function drawGrid() {
+            const group = document.getElementById('grid-group');
+            group.innerHTML = `<line x1="-500" y1="0" x2="500" y2="0" class="grid-axis"/><line x1="0" y1="-500" x2="0" y2="500" class="grid-axis"/>`;
+            for(let i = -500; i <= 500; i += 50) {
+                if(i===0) continue;
+                group.innerHTML += `<line x1="-500" y1="${i}" x2="500" y2="${i}" class="grid-line"/>`;
+                group.innerHTML += `<line x1="${i}" y1="-500" x2="${i}" y2="500" class="grid-line"/>`;
+            }
+        }
+
+        function render() {
+            const shapesGroup = document.getElementById('shapes-group');
+            const verticesGroup = document.getElementById('vertices-group');
+            const yGroup = document.getElementById('y-group');
+            
+            shapesGroup.innerHTML = ''; verticesGroup.innerHTML = ''; yGroup.innerHTML = '';
+            const pts = geom.points;
+
+            geom.shapes.forEach(s => {
+                const path = s.vertices.map(v => pts[v].join(',')).join(' ');
+                shapesGroup.innerHTML += `<polygon points="${path}" class="shape-path" />`;
+            });
+
+            geom.yLines.forEach(line => {
+                const p1 = pts[line[0]];
+                const p2 = pts[line[1]];
+                yGroup.innerHTML += `<line x1="${p1[0]}" y1="${p1[1]}" x2="${p2[0]}" y2="${p2[1]}" class="line-y" />`;
+            });
+
+            Object.keys(pts).forEach(pName => {
+                const [x, y] = pts[pName];
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', x); circle.setAttribute('cy', y);
+                circle.setAttribute('r', draggingPoint === pName ? 8 : 4);
+                circle.setAttribute('class', `vertex ${draggingPoint === pName ? 'dragging' : ''}`);
+                circle.setAttribute('data-name', pName);
+                verticesGroup.appendChild(circle);
+            });
+
+            editor.value = JSON.stringify(geom, null, 4);
+            generateMinimalSVG();
+        }
+
+        function generateMinimalSVG() {
+            let svgCode = `<svg viewBox="-500 -500 1000 1000" xmlns="http://www.w3.org/2000/svg" fill="black">\n`;
+            
+            geom.shapes.forEach(s => {
+                const path = s.vertices.map(v => geom.points[v].join(',')).join(' ');
+                svgCode += `  <polygon points="${path}" />\n`;
+            });
+
+            geom.yLines.forEach(line => {
+                const p1 = geom.points[line[0]];
+                const p2 = geom.points[line[1]];
+                svgCode += `  <line x1="${p1[0]}" y1="${p1[1]}" x2="${p2[0]}" y2="${p2[1]}" stroke="black" stroke-width="3" stroke-linecap="round" />\n`;
+            });
+
+            svgCode += `</svg>`;
+            exportArea.innerText = svgCode;
+        }
+
+        function copySVG() {
+            navigator.clipboard.writeText(exportArea.innerText);
+            alert("¡Código SVG copiado al portapapeles!");
+        }
+
+        // --- Drag Logic ---
+        svg.addEventListener('mousedown', (e) => {
+            if (e.target.classList.contains('vertex')) draggingPoint = e.target.getAttribute('data-name');
+        });
+        window.addEventListener('mousemove', (e) => {
+            if (draggingPoint) {
+                const CTM = svg.getScreenCTM();
+                const x = Math.round((e.clientX - CTM.e) / CTM.a);
+                const y = Math.round((e.clientY - CTM.f) / CTM.d);
+                geom.points[draggingPoint] = [x, y];
+                render();
+            }
+        });
+        window.addEventListener('mouseup', () => { draggingPoint = null; render(); });
+
+        init();
+    </script>
+</body>
+</html>
