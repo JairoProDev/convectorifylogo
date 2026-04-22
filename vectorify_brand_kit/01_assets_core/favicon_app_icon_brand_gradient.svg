@@ -1,0 +1,13 @@
+<svg viewBox="-390 -390 780 780" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="brandNeon" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00FFCC" />
+      <stop offset="100%" stop-color="#0055FF" />
+    </linearGradient>
+  </defs>
+  <g stroke-linejoin="round" stroke-linecap="round" fill="url(#brandNeon)" stroke="url(#brandNeon)">
+    <polygon points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" stroke-width="8"/>
+    <polygon points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" stroke-width="8"/>
+    <g stroke-width="24" fill="none"><line x1="0" y1="0" x2="0" y2="130"/><line x1="0" y1="0" x2="-145" y2="-92"/><line x1="0" y1="0" x2="145" y2="-92"/></g>
+  </g>
+</svg>
