@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SVG Animation: Magnetic Mouse Sweep</title>
+    <style>
+        body { background: #0a0c10; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
+        svg { width: 300px; height: 300px; color: #00ffcc; fill: currentColor; stroke: currentColor; 
+              transition: transform 0.1s ease-out; transform-style: preserve-3d; filter: drop-shadow(0 20px 30px rgba(0,255,204,0.15)); }
+    </style>
+</head>
+<body>
+    <svg class="magnet" viewBox="-510 -510 1020 1020">
+        <g stroke-linejoin="round" stroke-linecap="round"><polygon points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" stroke-width="8"/><polygon points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" stroke-width="8"/><g stroke-width="24" fill="none"><line x1="0" y1="0" x2="0" y2="130"/><line x1="0" y1="0" x2="-145" y2="-92"/><line x1="0" y1="0" x2="145" y2="-92"/></g></g>
+    </svg>
+    <script>
+        document.addEventListener('mousemove', e => { 
+            const svg = document.querySelector('.magnet'); 
+            const rect = svg.getBoundingClientRect(); 
+            const dx = (e.clientX - (rect.left + rect.width/2))/10; 
+            const dy = (e.clientY - (rect.top + rect.height/2))/10; 
+            svg.style.transform = `translate(${dx}px, ${dy}px) rotateY(${dx}deg) rotateX(${-dy}deg)`; 
+        });
+    </script>
+</body>
+</html>

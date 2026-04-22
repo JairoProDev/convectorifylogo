@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="-510 -510 1020 1020" xmlns="http://www.w3.org/2000/svg">
+  <!-- 
+    ========================================================================
+    CONVECTORIFY LOGO - THE DEFINITIVE MASTER EDITION (v3.2)
+    ========================================================================
+    
+    ESTRUCTURA GEOMÉTRICA (GEOMETRÍA ISOMÉTRICA):
+    * Hexágono Perfecto: Todas las diagonales del contorno viajan a 30 grados 
+      sobre la horizontal. Esta relación matemática es lo que crea la 
+      perspectiva nanométrica/3D perfecta.
+    
+    ANÁLISIS DE MEDIDAS (TAMAÑO Y GROSOR):
+    * ViewBox (1020x1020 con centro en 0,0): Se ampliaron 10px los márgenes de 
+      un canvas estándar de 1000x1000.  ¿Por qué? Para evitar que el redondeo 
+      de las esquinas ampute el gráfico cuando se incrusta en la web.
+    * Radio Exterior (390): La distancia del pico superior al centro exacto.
+    * Grosor "C" Principal (130): 130 es un tercio (1/3) de 390. Este ratio
+      de 1:3 es lo que le otorga el balance entre solidez y espacio negativo.
+    * Grosor "Y" Central (24): Se escaló a 24px (Optical Compensation) para
+      competir visualmente con la gran masa negra de la C. Es el esqueleto interior.
+      
+    EL REFINAMIENTO DE 8 PIXELES (SMOOTH ROUNDING):
+    * Atributo: stroke-width="8", stroke-linejoin="round"
+    * Por qué 8px: Las esquinas matemáticas (0px) son letales para pantallas
+      medianas y dan sensación genérica y aserrada en curvas. Los 8px dilatan la 
+      pieza otorgando el acabado pulido característico de empresas de Silicon Valley.
+      
+    UNIFICACIÓN:
+    * La V (anteriormente dos brazos) se compila como un solo polígono de base rígida 
+      para evitar la línea de renderizado blanco del "anti-aliasing gap".
+  -->
+  <g stroke-linejoin="round" stroke-linecap="round" fill="currentColor" stroke="currentColor">
+    
+    <!-- CONTORNO C (La coraza) -->
+    <polygon points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" stroke-width="8" />
+    
+    <!-- COMPONENTE V (El núcleo incrustado) -->
+    <polygon points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" stroke-width="8" />
+    
+    <!-- CONEXIÓN Y (La perspectiva cúbica) -->
+    <g stroke-width="24" fill="none">
+      <line x1="0" y1="0" x2="0" y2="130" />
+      <line x1="0" y1="0" x2="-145" y2="-92" />
+      <line x1="0" y1="0" x2="145" y2="-92" />
+    </g>
+
+  </g>
+</svg>

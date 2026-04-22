@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SVG Animation: Elastic Spring Entry</title>
+    <style>
+        body { background: #0a0c10; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        svg { width: 300px; height: 300px; color: #fff; fill: currentColor; stroke: currentColor; 
+              animation: spring 2s infinite; transform-origin: bottom center; }
+        @keyframes spring { 
+            0%, 100% { transform: scale(1) translateY(0); } 
+            10% { transform: scale(1.2, 0.8) translateY(20px); } 
+            30% { transform: scale(0.9, 1.1) translateY(-30px); } 
+            50% { transform: scale(1.05, 0.95) translateY(0); } 
+            65% { transform: scale(0.98, 1.02) translateY(-5px); } 
+            80% { transform: scale(1, 1) translateY(0); } 
+        }
+    </style>
+</head>
+<body>
+    <svg viewBox="-510 -510 1020 1020">
+        <g stroke-linejoin="round" stroke-linecap="round"><polygon points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" stroke-width="8"/><polygon points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" stroke-width="8"/><g stroke-width="24" fill="none"><line x1="0" y1="0" x2="0" y2="130"/><line x1="0" y1="0" x2="-145" y2="-92"/><line x1="0" y1="0" x2="145" y2="-92"/></g></g>
+    </svg>
+</body>
+</html>
