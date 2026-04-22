@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SVG Fusion: Neon Radar Liquid</title>
+    <style>
+        body { background: #030508; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        
+        svg { 
+            width: 400px; height: 400px; color: #ff0055; fill: currentColor; stroke: currentColor; 
+            filter: url(#goo) drop-shadow(0 0 10px #ff0055) drop-shadow(0 0 30px #ff0055);
+            mask: url(#radar);
+            animation: breatheGoo 3s infinite alternate ease-in-out;
+        }
+
+        @keyframes breatheGoo { 
+            0% { transform: scale(1); filter: url(#goo) drop-shadow(0 0 10px #ff0055) drop-shadow(0 0 20px #ff0055); } 
+            100% { transform: scale(1.05); filter: url(#goo) drop-shadow(0 0 20px #ff0055) drop-shadow(0 0 50px #ff0055); } 
+        }
+
+        .c-shell { opacity: 0.6; }
+        .v-core { fill: none; stroke: currentColor; stroke-width: 12px; }
+        .y-stem { stroke-width: 24px !important; }
+    </style>
+</head>
+<body>
+    <!-- Fusión: Liquid Gooey + Neon Glow + Radar Sweep -->
+    <svg viewBox="-510 -510 1020 1020">
+        <defs>
+            <filter id="goo">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur"/>
+                <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9"/>
+            </filter>
+            <mask id="radar">
+                <rect x="-600" y="-600" width="1200" height="1200" fill="gray">
+                    <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="2s" repeatCount="indefinite" />
+                </rect>
+                <path d="M0,0 L0,-600 A600,600 0 0,1 600,0 Z" fill="white">
+                     <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="2s" repeatCount="indefinite" />
+                </path>
+            </mask>
+        </defs>
+
+        <g stroke-linejoin="round" stroke-linecap="round">
+            <polygon class="c-shell" points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" stroke-width="8"/>
+            <polygon class="v-core" points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" />
+            <g class="y-stem" fill="none"><line x1="0" y1="0" x2="0" y2="130"/><line x1="0" y1="0" x2="-145" y2="-92"/><line x1="0" y1="0" x2="145" y2="-92"/></g>
+        </g>
+    </svg>
+</body>
+</html>

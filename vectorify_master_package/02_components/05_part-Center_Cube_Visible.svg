@@ -1,0 +1,10 @@
+<svg viewBox="-510 -510 1020 1020" xmlns="http://www.w3.org/2000/svg">
+  <g stroke-linejoin="round" stroke-linecap="round" fill="currentColor" stroke="currentColor">
+    <!-- Cara Top (Diamante Superior) -->
+    <polygon points="0,0 145,-92 0,-184 -145,-92" stroke-width="8" opacity="0.8"/>
+    <!-- Cara Derecha (Inferior derecha) -->
+    <polygon points="0,0 145,-92 145,38 0,130" stroke-width="8" opacity="0.6"/>
+    <!-- Cara Izquierda (Inferior izquierda) -->
+    <polygon points="0,0 -145,-92 -145,38 0,130" stroke-width="8" opacity="0.4"/>
+  </g>
+</svg>

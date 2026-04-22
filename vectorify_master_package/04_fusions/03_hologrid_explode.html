@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SVG Fusion: Hologrid Explode Matrix</title>
+    <style>
+        body { background: #030508; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        
+        svg { 
+            width: 400px; height: 400px; color: #0055ff; fill: rgba(0, 85, 255, 0.1); stroke: currentColor;
+            mask-image: linear-gradient(to bottom, white 50%, transparent 50%);
+            mask-size: 100% 20px; animation: scanline 4s infinite linear, colorMatrix 10s infinite alternate;
+            transition: 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); cursor: pointer;
+        }
+
+        /* ESTRUCTURA DINÁMICA: CSS OVERRIDES THE GROSOR Y-STEM DURANTE WIREFRAME */
+        .c-shell { stroke-width: 8px; stroke-dasharray: 40 80; animation: dashChase 3s linear infinite; }
+        .v-core  { stroke-width: 8px; }
+        .y-stem  { stroke-width: 8px !important; } /* Reparación del grosor */
+
+        /* HOVER EXPLOSIÓN MATRIX */
+        svg:hover { transform: scale(1.1); filter: drop-shadow(0 0 20px #00ffcc); mask-size: 100% 4px; color: #00ffcc; }
+        svg:hover .c-shell { stroke-dasharray: none; fill: rgba(0,255,204,0.05); }
+        svg:hover .v-core { transform: translateY(40px) scale(0.9); transform-origin: center; fill: #00ffcc; }
+        svg:hover .y-stem { transform: translateY(-40px) scale(1.1); transform-origin: center; color: #fff;}
+
+        @keyframes scanline { 0% { mask-position: 0 0; } 100% { mask-position: 0 1000px; } }
+        @keyframes dashChase { to { stroke-dashoffset: 120; } }
+        @keyframes colorMatrix { 0% { color: #0055ff; } 100% { color: #ff00a2; } }
+    </style>
+</head>
+<body>
+    <!-- Fusión: Efecto Lluvia Matrix + Hover Estructural de Piezas + Patrón Eléctrico + Reparación de Y CSS -->
+    <svg viewBox="-510 -510 1020 1020">
+        <g stroke-linejoin="round" stroke-linecap="round">
+            <polygon class="c-shell" points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" />
+            <polygon class="v-core" points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" />
+            <g class="y-stem" fill="none"><line x1="0" y1="0" x2="0" y2="130"/><line x1="0" y1="0" x2="-145" y2="-92"/><line x1="0" y1="0" x2="145" y2="-92"/></g>
+        </g>
+    </svg>
+</body>
+</html>

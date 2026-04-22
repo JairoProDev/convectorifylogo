@@ -1,0 +1,15 @@
+<svg viewBox="-510 -510 1020 1020" xmlns="http://www.w3.org/2000/svg">
+  <g stroke-linejoin="round" stroke-linecap="round" fill="none" stroke="currentColor" stroke-width="16">
+    <!-- Vector Z (Arriba Izquierda) con flecha -->
+    <path d="M 0,0 L -145,-92 L -100,-115 M -145,-92 L -145,-40" />
+    
+    <!-- Vector X (Arriba Derecha) con flecha -->
+    <path d="M 0,0 L 145,-92 L 100,-115 M 145,-92 L 145,-40" />
+    
+    <!-- Vector Y (Abajo) con flecha -->
+    <path d="M 0,0 L 0,130 L -30,90 M 0,130 L 30,90" />
+    
+    <!-- Centro nodal -->
+    <circle cx="0" cy="0" r="12" fill="currentColor" />
+  </g>
+</svg>
