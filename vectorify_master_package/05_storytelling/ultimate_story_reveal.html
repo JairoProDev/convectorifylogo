@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SVG Storytelling: Ultimate Logo Assembly Reveal</title>
+    <style>
+        body { 
+            background: #030508; color: #fff; font-family: 'Inter', sans-serif; 
+            margin: 0; height: 100vh; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; overflow: hidden;
+            --t-dur: 2s; /* Tiempo base */
+        }
+        
+        .stage-title {
+            position: absolute; top: 10%; font-size: 1.5rem; letter-spacing: 5px; 
+            color: #00ffcc; text-transform: uppercase; font-weight: 300;
+            opacity: 0; animation: textSequence 12s linear forwards;
+        }
+
+        .container { width: 500px; height: 500px; position: relative; }
+        svg { width: 100%; height: 100%; overflow: visible; }
+
+        /* ESTADO INICIAL COMPONENTES */
+        .c-shell { fill: transparent; stroke: #333; stroke-width: 8px; stroke-dasharray: 4000; stroke-dashoffset: 4000; }
+        .v-core { opacity: 0; transform: translateY(-300px) scale(0.8); fill: #fff; }
+        .y-stem line { stroke: #00ffcc; stroke-dasharray: 500; stroke-dashoffset: 500; stroke-width: 4px; }
+        .cube-illus { opacity: 0; fill: #0055ff; mix-blend-mode: color-dodge; }
+
+        /* CORE STORYTELLING ANIMATIONS (SECUENCIA Y TIEMPOS) */
+        
+        /* 1. Acto 1: La Coraza nace y se dibuja a sí misma (Segundo 0-3) */
+        .c-shell { animation: drawShell 3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        @keyframes drawShell { 50% { stroke-dashoffset: 0; fill: transparent; } 100% { stroke-dashoffset: 0; stroke: transparent; fill: #111; } }
+
+        /* 2. Acto 2: Inyección de Vectores (La Y estalla desde el centro) (Segundo 3-5) */
+        .y-stem line { animation: shootVectors 2s 3s forwards; }
+        @keyframes shootVectors { 50% { stroke-dashoffset: 0; stroke-width: 4px; } 100% { stroke-dashoffset: 0; stroke-width: 24px; stroke: #fff;} }
+
+        /* 3. Acto 3: Aterrizaje del Núcleo (La V cae gravitacionalmente) (Segundo 5-7) */
+        .v-core { transform-origin: center; animation: coreDrop 2s 5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes coreDrop { 100% { opacity: 1; transform: translateY(0) scale(1); fill: #fff;} }
+
+        /* 4. Acto 4: Sincronización Global (Color + Cubo Mágico + Rotación) (Segundo 7-10) */
+        .c-shell { animation: finalShellColor 2s 7s forwards; }
+        @keyframes finalShellColor { to { fill: #fff; stroke: #fff; } }
+
+        .cube-illus { animation: flashCube 3s 7s ease-out forwards; }
+        @keyframes flashCube { 0% { opacity: 0; transform: scale(0.9); } 20% { opacity: 0.8; transform: scale(1.05); } 100% { opacity: 0; transform: scale(1); } }
+
+        svg { animation: masterFinish 3s 8s cubic-bezier(0.4, 0, 0.2, 1) forwards; transform-origin: center; transform-style: preserve-3d; }
+        @keyframes masterFinish {
+            0% { transform: perspective(1000px) rotateY(0deg) rotateX(0deg) scale(1); filter: drop-shadow(0 0 0 #000); }
+            50% { transform: perspective(1000px) rotateY(15deg) rotateX(10deg) scale(1.1); filter: drop-shadow(0 30px 40px rgba(0,255,204,0.4)); color: #00ffcc;}
+            100% { transform: perspective(1000px) rotateY(0deg) rotateX(0deg) scale(1.0); filter: drop-shadow(0 10px 20px rgba(0,255,204,0.1)); color: #xfff; } /* Settles down */
+        }
+
+        @keyframes textSequence {
+            0%, 5% { opacity: 0; content: "ESTABLECIENDO PERÍMETRO..."; } 10%, 25% { opacity: 1; content: "ESTABLECIENDO PERÍMETRO..."; }
+            30%, 35% { opacity: 0; content: "CALIBRANDO VECTORES EJE X-Y-Z"; } 40%, 45% { opacity: 1; content: "CALIBRANDO VECTORES EJE X-Y-Z"; }
+            50%, 55% { opacity: 0; content: "ATERRIZAJE DE NÚCLEO"; color: #fff;} 60%, 75% { opacity: 1; content: "ATERRIZAJE DE NÚCLEO"; color: #fff;}
+            80%, 85% { opacity: 0; content: "SISTEMAS ONLINE"; color: #00ffcc;} 90%, 100% { opacity: 1; content: "CONVECTORIFY ONLINE"; color: #00ffcc; text-shadow: 0 0 20px #00ffcc; transform: scale(1.1);}
+        }
+    </style>
+</head>
+<body>
+    <div class="stage-title">INICIALIZANDO MOTOR...</div>
+    
+    <div class="container">
+        <svg viewBox="-510 -510 1020 1020">
+            <g stroke-linejoin="round" stroke-linecap="round">
+                <!-- 1. El Hexágono Outer -->
+                <polygon class="c-shell" points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" />
+                
+                <!-- Cubo Holográfico Ilusorio Temporal -->
+                <polygon class="cube-illus" points="0,0 145,-92 0,130 -145,-92" />
+                
+                <!-- 3. Los conectores 3D Internos -->
+                <g class="y-stem" fill="none" stroke-linecap="round">
+                    <line x1="0" y1="0" x2="0" y2="130"/><line x1="0" y1="0" x2="-145" y2="-92"/><line x1="0" y1="0" x2="145" y2="-92"/>
+                </g>
+
+                <!-- 2. El Núcleo de Dirección Descendente -->
+                <polygon class="v-core" points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" stroke-width="8" stroke="currentColor"/>
+            </g>
+        </svg>
+    </div>
+
+    <script>
+        // Animamos el cambio de texto con JS también para más robustez en la narrativa
+        const txt = document.querySelector('.stage-title');
+        setTimeout(()=> txt.innerText = "ESTABLECIENDO PERÍMETRO_OUTER_C", 500);
+        setTimeout(()=> txt.innerText = "CALIBRANDO VECTORES X-Y-Z", 3500);
+        setTimeout(()=> txt.style.color = "#fff", 5500);
+        setTimeout(()=> txt.innerText = "ENSAMBLAJE DE NÚCLEO V-CORE", 5500);
+        setTimeout(()=> txt.style.color = "#00ffcc", 8200);
+        setTimeout(()=> txt.innerText = "SISTEMAS ONLINE: CONVECTORIFY", 8200);
+    </script>
+</body>
+</html>
