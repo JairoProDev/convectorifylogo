@@ -1,0 +1,18 @@
+<svg viewBox="-500 -500 1000 1000" xmlns="http://www.w3.org/2000/svg">
+  <!-- Convectorify Logo - Pure Vector SVG -->
+  <!-- Letra C (Estructura Hexagonal) -->
+  <polygon points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" fill="black" />
+  
+  <!-- Ala Izquierda de la V -->
+  <polygon points="-70,-130 -125,-75 0,130 0,260 -225,-130" fill="black" />
+  
+  <!-- Ala Derecha de la V -->
+  <polygon points="70,-130 125,-75 0,130 0,260 225,-130" fill="black" />
+  
+  <!-- Eje Central (Y) -->
+  <g stroke="black" stroke-width="3" stroke-linecap="round">
+    <line x1="0" y1="0" x2="0" y2="130" />
+    <line x1="0" y1="0" x2="-125" y2="-75" />
+    <line x1="0" y1="0" x2="125" y2="-75" />
+  </g>
+</svg>
