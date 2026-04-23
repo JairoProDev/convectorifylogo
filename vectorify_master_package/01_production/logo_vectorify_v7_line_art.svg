@@ -1,0 +1,16 @@
+<svg viewBox="-350 -400 700 800" xmlns="http://www.w3.org/2000/svg">
+  <title>Vectorify V7 - Line Art (Pure Outline)</title>
+  <!-- Grupo maestro: 100% Sin relleno (Transparente), únicamente delineado de 8px para TODO. -->
+  <g fill="none" stroke="#000000" stroke-width="8" stroke-linejoin="round" stroke-linecap="round">
+    <!-- C Shell -->
+    <polygon points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" />
+    
+    <!-- V Core -->
+    <polygon points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" />
+    
+    <!-- Y Structure (Ahora mismo grosor de 8px que C y V) -->
+    <line x1="0" y1="0" x2="0" y2="130" />
+    <line x1="0" y1="0" x2="-145" y2="-92" />
+    <line x1="0" y1="0" x2="145" y2="-92" />
+  </g>
+</svg>

@@ -1,0 +1,10 @@
+<svg viewBox="-400 -400 800 800" fill="#000" stroke="#000" stroke-width="8" stroke-linejoin="round" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">
+  <!-- Forma C -->
+  <path d="M0-390 338-195 225-130 0-260-225-130V130L0 260 225 130 338 195 0 390-338 195V-195Z"/>
+  
+  <!-- Forma V -->
+  <path d="M-225-130 0 260 225-130H80L145-92 0 130-145-92-80-130Z"/>
+  
+  <!-- Estructura Y (Unificada en 1 solo Path) -->
+  <path fill="none" stroke-width="24" d="M0 130V0L-145-92M0 0L145-92"/>
+</svg>

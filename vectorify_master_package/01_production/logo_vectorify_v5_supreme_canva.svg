@@ -1,0 +1,13 @@
+<svg viewBox="-350 -400 700 800" xmlns="http://www.w3.org/2000/svg">
+  <title>Vectorify Supreme - Single Palette Format</title>
+  <g fill="#111111" stroke="#111111" stroke-width="8" stroke-linejoin="round" stroke-linecap="round">
+    <!-- C Shell -->
+    <polygon points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" />
+    
+    <!-- V Core -->
+    <polygon points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" />
+    
+    <!-- Y Structure (Mathematically converted to a single pure Fill Path with integrated round caps) -->
+    <path d="M 0,6.04 L 138.6,-102.1 A 12,12 0 0,1 151.4,-81.9 L 12,-13.65 L 12,130 A 12,12 0 0,1 -12,130 L -12,-13.65 L -151.4,-81.9 A 12,12 0 0,1 -138.6,-102.1 Z" />
+  </g>
+</svg>
