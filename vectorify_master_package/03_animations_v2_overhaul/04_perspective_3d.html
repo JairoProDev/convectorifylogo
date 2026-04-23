@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>04 - TRUE 3D Holographic Perspective [V-OVERHAUL]</title>
+    <style>
+        body { background: #030508; height: 100vh; display: flex; justify-content: center; align-items: center; margin: 0; perspective: 1200px; overflow: hidden; }
+        
+        /* The container itself rotates */
+        .hologram-glass { width: 350px; height: 350px; transform-style: preserve-3d; animation: levitateSphere 10s linear infinite; }
+        
+        .c-shell { stroke: rgba(0,255,204,0.4); fill: rgba(0,255,204,0.05); stroke-width: 8px; transform: translateZ(-50px); }
+        .v-core  { stroke: rgba(0,180,255,0.6); fill: rgba(0,180,255,0.1); stroke-width: 8px; transform: translateZ(20px); filter: drop-shadow(0 0 20px rgba(0,180,255,0.4));}
+        .y-stem  { stroke: #fff; fill: none; stroke-width: 8px !important; transform: translateZ(80px); filter: drop-shadow(0 0 10px #fff); }
+
+        @keyframes levitateSphere {
+            0% { transform: rotateY(0deg) rotateX(15deg) translateY(0); }
+            50% { transform: rotateY(180deg) rotateX(25deg) translateY(-20px); }
+            100% { transform: rotateY(360deg) rotateX(15deg) translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Real 3D Z-Axis Separation: C is pushed back, V is neutral, Y shoots perfectly 3D forward -->
+    <div class="hologram-glass">
+        <svg viewBox="-510 -510 1020 1020" style="overflow: visible;">
+            <g stroke-linejoin="round" stroke-linecap="round">
+                <!-- Se aplicó transformaciones independientes en CSS a cada pieza para el despiece Z-Axis -->
+                <polygon class="c-shell" points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" />
+                <polygon class="v-core"  points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" />
+                <g class="y-stem"><line x1="0" y1="0" x2="0" y2="130"/><line x1="0" y1="0" x2="-145" y2="-92"/><line x1="0" y1="0" x2="145" y2="-92"/></g>
+            </g>
+        </svg>
+    </div>
+</body>
+</html>

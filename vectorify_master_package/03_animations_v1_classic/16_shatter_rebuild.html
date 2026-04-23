@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SVG Animation: Structural Shatter Rebuild (V1)</title>
+    <style>
+        body { background: #0a0c10; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        svg { width: 300px; height: 300px; color: #fff; fill: currentColor; stroke: currentColor; overflow: visible;}
+        polygon, g { animation: shatter 4s infinite cubic-bezier(0.68, -0.55, 0.265, 1.55); transform-origin: center; }
+        g { animation-delay: 0.2s; } polygon:nth-child(2) { animation-delay: 0.4s; }
+        @keyframes shatter { 0%, 20% { transform: translate(0,0) rotate(0deg); opacity: 1; } 50% { transform: translate(var(--tx, 100px), var(--ty, 100px)) rotate(var(--rot, 45deg)); opacity: 0; } 80%, 100% { transform: translate(0,0) rotate(0deg); opacity: 1; } }
+        polygon:nth-child(1) { --tx: -200px; --ty: -100px; --rot: -40deg; } polygon:nth-child(2) { --tx: 200px; --ty: 100px; --rot: 60deg; }
+        g { --tx: 0px; --ty: 200px; --rot: 180deg; }
+    </style>
+</head>
+<body><svg viewBox="-510 -510 1020 1020"><g stroke-linejoin="round" stroke-linecap="round"><polygon points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" stroke-width="8"/><polygon points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" stroke-width="8"/><g stroke-width="24" fill="none"><line x1="0" y1="0" x2="0" y2="130"/><line x1="0" y1="0" x2="-145" y2="-92"/><line x1="0" y1="0" x2="145" y2="-92"/></g></g></svg></body>
+</html>

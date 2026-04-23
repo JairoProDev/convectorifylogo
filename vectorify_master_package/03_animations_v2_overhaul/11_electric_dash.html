@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>11 - Optical Fiber Dash [V-OVERHAUL]</title>
+    <style>
+        body { background: #030508; height: 100vh; display: flex; justify-content: center; align-items: center; margin: 0; }
+        .wrapper { position: relative; width: 350px; height: 350px; }
+        
+        svg { width: 100%; height: 100%; position: absolute; top:0; left:0; fill: transparent; stroke-width: 8px; stroke-linecap: round;}
+        
+        /* THE UPGRADE: 3 Overlapping SVG paths running at different speeds/offsets */
+        .layer-1 { stroke: #00ffcc; stroke-dasharray: 100 400; stroke-dashoffset: 0; animation: trace 3s linear infinite; filter: drop-shadow(0 0 10px #00ffcc); z-index: 3;}
+        .layer-2 { stroke: #ff00a2; stroke-dasharray: 200 400; stroke-dashoffset: 200; animation: trace 4s linear infinite; filter: drop-shadow(0 0 15px #ff00a2); opacity: 0.7; z-index: 2;}
+        .layer-3 { stroke: #0055ff; stroke-dasharray: 300 400; stroke-dashoffset: -100; animation: trace 5s linear infinite; filter: drop-shadow(0 0 20px #0055ff); opacity: 0.5; z-index: 1;}
+
+        .y-stem { stroke-width: 8px !important; }
+
+        @keyframes trace { to { stroke-dashoffset: 1000; } }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <!-- Optical Illusion using stacked SVG traces -->
+        <svg viewBox="-510 -510 1020 1020" class="layer-3"><g stroke-linejoin="round"><polygon points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" /><polygon points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" /><g class="y-stem" fill="none"><line x1="0" y1="0" x2="0" y2="130"/><line x1="0" y1="0" x2="-145" y2="-92"/><line x1="0" y1="0" x2="145" y2="-92"/></g></g></svg>
+        <svg viewBox="-510 -510 1020 1020" class="layer-2"><g stroke-linejoin="round"><polygon points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" /><polygon points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" /><g class="y-stem" fill="none"><line x1="0" y1="0" x2="0" y2="130"/><line x1="0" y1="0" x2="-145" y2="-92"/><line x1="0" y1="0" x2="145" y2="-92"/></g></g></svg>
+        <svg viewBox="-510 -510 1020 1020" class="layer-1"><g stroke-linejoin="round"><polygon points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" /><polygon points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" /><g class="y-stem" fill="none"><line x1="0" y1="0" x2="0" y2="130"/><line x1="0" y1="0" x2="-145" y2="-92"/><line x1="0" y1="0" x2="145" y2="-92"/></g></g></svg>
+    </div>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>06 - Biomechanic Heartbeat Pulse [V-OVERHAUL]</title>
+    <style>
+        body { background: #030508; height: 100vh; display: flex; justify-content: center; align-items: center; margin: 0; }
+        svg { width: 350px; height: 350px; }
+
+        .c-shell { fill: #111; stroke: #222; stroke-width: 8px; animation: shellBreathe 1.5s infinite alternate ease-in-out; transform-origin: center;}
+        .v-core { fill: transparent; stroke: #333; stroke-width: 8px; }
+        
+        /* THE HEART - Sharp double beat */
+        .y-stem { stroke: #ff0055; stroke-width: 24px; fill: none; transform-origin: center; animation: heartbeat 1.5s infinite; filter: drop-shadow(0 0 0 #ff0055); }
+
+        @keyframes shellBreathe { 0% { transform: scale(0.98); } 100% { transform: scale(1.02); } }
+        
+        /* Medical ECG style double-pump */
+        @keyframes heartbeat {
+            0% { transform: scale(1); filter: drop-shadow(0 0 5px #ff0055); stroke: #ff0055; }
+            15% { transform: scale(1.15); filter: drop-shadow(0 0 30px #ff0055); stroke: #fff;}
+            25% { transform: scale(1); filter: drop-shadow(0 0 5px #ff0055); stroke: #ff0055;}
+            35% { transform: scale(1.10); filter: drop-shadow(0 0 20px #ff0055); stroke: #fff;}
+            50%, 100% { transform: scale(1); filter: drop-shadow(0 0 5px #ff0055); stroke: #ff0055;}
+        }
+    </style>
+</head>
+<body>
+    <svg viewBox="-510 -510 1020 1020">
+        <g stroke-linejoin="round" stroke-linecap="round">
+            <polygon class="c-shell" points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" />
+            <polygon class="v-core"  points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" />
+            <g class="y-stem"><line x1="0" y1="0" x2="0" y2="130"/><line x1="0" y1="0" x2="-145" y2="-92"/><line x1="0" y1="0" x2="145" y2="-92"/></g>
+        </g>
+    </svg>
+</body>
+</html>

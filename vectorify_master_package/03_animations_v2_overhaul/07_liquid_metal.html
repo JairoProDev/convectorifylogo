@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>07 - Liquid Mercury Gravity [V-OVERHAUL]</title>
+    <style>
+        body { background: #030508; height: 100vh; display: flex; justify-content: center; align-items: center; margin: 0; }
+        svg { width: 350px; height: 350px; filter: url(#goo) drop-shadow(0 20px 20px rgba(0,255,204,0.1)); }
+
+        .c-shell { fill: currentColor; stroke: currentColor; stroke-width: 8px; color: #fff; }
+        /* Liquid logic applied independently to internals */
+        .v-core { fill: none; stroke: currentColor; stroke-width: 8px; animation: dripDown 4s infinite cubic-bezier(0.45, 0.05, 0.55, 0.95); transform-origin: center; color: #00ffcc; }
+        .y-stem { stroke: currentColor; stroke-width: 24px; fill: none; animation: dripUp 4s infinite cubic-bezier(0.45, 0.05, 0.55, 0.95); transform-origin: center; color: #fff;}
+
+        @keyframes dripDown { 0%, 15% { transform: translateY(0) scale(1); } 50% { transform: translateY(200px) scale(0.6, 1.2); } 85%, 100% { transform: translateY(0) scale(1); } }
+        @keyframes dripUp { 0%, 25% { transform: translateY(0) scale(1); } 50% { transform: translateY(-150px) scale(0.8, 1.1); } 75%, 100% { transform: translateY(0) scale(1); } }
+    </style>
+</head>
+<body>
+    <svg viewBox="-510 -510 1020 1020">
+        <defs>
+            <!-- Enhanced Viscosity Filter matrix -->
+            <filter id="goo" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="15" result="blur"/>
+                <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 25 -10" result="goo"/>
+                <feBlend in="SourceGraphic" in2="goo" />
+            </filter>
+        </defs>
+        <g stroke-linejoin="round" stroke-linecap="round">
+            <polygon class="c-shell" points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" />
+            <polygon class="v-core"  points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" />
+            <g class="y-stem"><line x1="0" y1="0" x2="0" y2="130"/><line x1="0" y1="0" x2="-145" y2="-92"/><line x1="0" y1="0" x2="145" y2="-92"/></g>
+        </g>
+    </svg>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>19 - X-Ray Ghost Transparency [V-OVERHAUL]</title>
+    <style>
+        body { background: #030508; height: 100vh; display: flex; justify-content: center; align-items: center; margin: 0; }
+        svg { width: 350px; height: 350px; color: #fff; fill: currentColor; stroke: currentColor; 
+              filter: drop-shadow(0 0 10px rgba(0,255,204,0.3));}
+
+        /* An exotic, elegant display of geometry fading into inner bones */
+        .c-shell { stroke-width: 8px; fill: #111; stroke: #333; animation: fadeShell 4s infinite alternate ease-in-out;}
+        .v-core { fill: #00ffcc; stroke: none; animation: fadeCore 4s infinite alternate ease-in-out; }
+        .y-stem { stroke-width: 24px; stroke: #111; fill: none; animation: fadeY 4s infinite alternate ease-in-out;}
+
+        @keyframes fadeShell { 0%, 20% { opacity: 1; stroke: #333; } 80%, 100% { opacity: 0.1; stroke: #00ffcc; stroke-width: 2px;} }
+        @keyframes fadeCore { 0%, 20% { fill: #00ffcc; opacity: 1; } 80%, 100% { fill: transparent; stroke: #00ffcc; stroke-width: 8px; filter: drop-shadow(0 0 15px #00ffcc); opacity: 1;} }
+        @keyframes fadeY { 0%, 20% { stroke: #111; stroke-width: 24px; opacity: 1; } 80%, 100% { stroke: #fff; stroke-width: 2px; opacity: 0.4; } }
+
+    </style>
+</head>
+<body>
+    <svg viewBox="-510 -510 1020 1020">
+        <g stroke-linejoin="round" stroke-linecap="round">
+            <polygon class="c-shell" points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" />
+            <polygon class="v-core"  points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" />
+            <g class="y-stem" fill="none"><line x1="0" y1="0" x2="0" y2="130"/><line x1="0" y1="0" x2="-145" y2="-92"/><line x1="0" y1="0" x2="145" y2="-92"/></g>
+        </g>
+    </svg>
+</body>
+</html>

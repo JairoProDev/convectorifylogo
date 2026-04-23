@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SVG Animation: Deep Space Orbital Echo (V1)</title>
+    <style>
+        body { background: #0a0c10; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
+        .wrapper { position: relative; width: 300px; height: 300px; }
+        .echo { position: absolute; top:0; left:0; width: 100%; height: 100%; color: #00ffcc; fill: none; stroke: currentColor; stroke-width: 4; animation: echoGrow 3s infinite ease-out; z-index: -1; }
+        .center-logo { position: absolute; top:0; left:0; width: 100%; height: 100%; color: #fff; fill: currentColor; stroke: currentColor; }
+        .e2 { animation-delay: 1.5s; color: #ff0055;}
+        @keyframes echoGrow { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(2.5); opacity: 0; } }
+    </style>
+</head>
+<body><div class="wrapper">
+    <svg class="echo e1" viewBox="-510 -510 1020 1020"><g stroke-linejoin="round" stroke-linecap="round"><polygon points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" /></g></svg>
+    <svg class="echo e2" viewBox="-510 -510 1020 1020"><g stroke-linejoin="round" stroke-linecap="round"><polygon points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" /></g></svg>
+    <svg class="center-logo" viewBox="-510 -510 1020 1020"><g stroke-linejoin="round" stroke-linecap="round"><polygon points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" stroke-width="8"/><polygon points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" stroke-width="8"/><g stroke-width="24" fill="none"><line x1="0" y1="0" x2="0" y2="130"/><line x1="0" y1="0" x2="-145" y2="-92"/><line x1="0" y1="0" x2="145" y2="-92"/></g></g></svg>
+</div></body>
+</html>

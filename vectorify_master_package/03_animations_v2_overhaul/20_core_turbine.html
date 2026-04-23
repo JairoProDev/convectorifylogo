@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>20 - Inner Reactor Turbine [V-OVERHAUL]</title>
+    <style>
+        body { background: #030508; height: 100vh; display: flex; justify-content: center; align-items: center; margin: 0; }
+        svg { width: 350px; height: 350px; }
+
+        .c-shell { stroke-width: 8px; fill: #111; stroke: rgba(0,255,204,0.3); }
+        
+        /* The Core pieces disconnect entirely forming an engine turbine */
+        .v-core { fill: rgba(0,255,204,0.1); stroke: #00ffcc; stroke-width: 8px; transform-origin: center; animation: spinCore 6s cubic-bezier(0.5, 0, 0.5, 1) infinite; filter: drop-shadow(0 0 10px #00ffcc);}
+        
+        .y-stem { stroke-width: 8px !important; stroke: #fff; fill: none; transform-origin: center; animation: spinCore 4s linear infinite reverse;}
+
+        @keyframes spinCore { 
+            0% { transform: rotate(0deg) scale(0.9); } 
+            50% { transform: rotate(180deg) scale(0.6); } 
+            100% { transform: rotate(360deg) scale(0.9); } 
+        }
+    </style>
+</head>
+<body>
+    <svg viewBox="-510 -510 1020 1020">
+        <g stroke-linejoin="round" stroke-linecap="round">
+            <!-- Coraza anclada actuando como puerto de contención -->
+            <polygon class="c-shell" points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" />
+            
+            <!-- V giran en un sentido mientras Y gira en contra produciendo motor de mezcla -->
+            <polygon class="v-core"  points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" />
+            <g class="y-stem" fill="none"><line x1="0" y1="0" x2="0" y2="130"/><line x1="0" y1="0" x2="-145" y2="-92"/><line x1="0" y1="0" x2="145" y2="-92"/></g>
+        </g>
+    </svg>
+</body>
+</html>

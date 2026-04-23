@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>01 - Neon Cyberpunk [V-OVERHAUL]</title>
+    <style>
+        body { background: #010203; height: 100vh; display: flex; justify-content: center; align-items: center; margin: 0; overflow: hidden; }
+        svg { width: 350px; height: 350px; }
+
+        /* THE FIX: Wireframe mode requires Y to be 8px to match others */
+        .c-shell, .v-core { fill: transparent; stroke: #00ffcc; stroke-width: 8px; }
+        .y-stem { stroke: #00ffcc; fill: transparent; stroke-width: 8px !important; }
+
+        /* MULTI-LAYERED REALISTIC NEON GLOW */
+        .logo-group {
+            filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 10px #00ffcc) drop-shadow(0 0 20px #00ffcc) drop-shadow(0 0 40px #0055ff);
+            animation: neonPulse 3s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+        }
+
+        /* V-CORE FAULTY TUBE FLICKER EFFECT */
+        .v-core { animation: faultFlicker 4s infinite; }
+
+        @keyframes neonPulse { 0% { opacity: 0.8; filter: drop-shadow(0 0 5px #00ffcc) drop-shadow(0 0 15px #00ffcc); } 100% { opacity: 1; filter: drop-shadow(0 0 10px #00ffcc) drop-shadow(0 0 30px #00ffcc) drop-shadow(0 0 60px #0055ff); transform: scale(1.02); } }
+        @keyframes faultFlicker { 0%, 18%, 22%, 25%, 53%, 57%, 100% { stroke: #00ffcc; opacity: 1; } 20%, 24%, 55% { stroke: #113333; opacity: 0.2; } }
+    </style>
+</head>
+<body>
+    <svg viewBox="-510 -510 1020 1020" class="master-svg">
+        <g class="logo-group" stroke-linejoin="round" stroke-linecap="round">
+            <polygon class="c-shell" points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" />
+            <polygon class="v-core"  points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" />
+            <g class="y-stem"><line x1="0" y1="0" x2="0" y2="130"/><line x1="0" y1="0" x2="-145" y2="-92"/><line x1="0" y1="0" x2="145" y2="-92"/></g>
+        </g>
+    </svg>
+</body>
+</html>

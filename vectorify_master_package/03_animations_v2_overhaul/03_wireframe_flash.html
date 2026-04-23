@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>03 - Strobe Scanline Flash [V-OVERHAUL]</title>
+    <style>
+        body { background: #030508; height: 100vh; display: flex; justify-content: center; align-items: center; margin: 0; overflow: hidden; }
+        
+        /* RADAR BEAM SWEEP OVERLAY */
+        .radar-beam { position: absolute; top: -50%; left: -50%; width: 200%; height: 5px; background: #fff; box-shadow: 0 0 30px 10px #fff, 0 0 60px 20px #00ffcc; opacity: 0; animation: sweepLoop 3s infinite linear; z-index: 10; blend-mode: screen; }
+
+        svg { width: 350px; height: 350px; color: #fff; position: relative; z-index: 1; animation: structureStrobe 3s infinite linear;}
+        
+        .c-shell, .v-core { stroke-width: 8px; stroke: currentColor; fill: currentColor; }
+        .y-stem { stroke-width: 24px; stroke: currentColor; fill: none; }
+
+        @keyframes sweepLoop { 0% { top: -20%; opacity: 0; } 10% { opacity: 0.8; } 50% { top: 120%; opacity: 0; } 100% { top: 120%; opacity: 0; } }
+        
+        /* As the beam passes (10% to 30%), the logo turns into a brutal wireframe */
+        @keyframes structureStrobe {
+            0%, 5% { color: #222; }
+            10% { color: #fff; stroke-width: 8px; fill: transparent; } /* Wireframe pop! */
+            15% { color: #00ffcc; stroke-width: 12px; fill: transparent; }
+            20% { color: #fff; stroke-width: 8px; fill: transparent; }
+            25%, 100% { color: #222; fill: currentColor; stroke: currentColor; stroke-width: 4px; }
+        }
+        
+        .animated-wrapper { position: relative; }
+    </style>
+</head>
+<body>
+    <div class="animated-wrapper">
+        <div class="radar-beam"></div>
+        <svg viewBox="-510 -510 1020 1020">
+            <g stroke-linejoin="round" stroke-linecap="round">
+                <polygon class="c-shell" points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" />
+                <polygon class="v-core"  points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" />
+                <g class="y-stem" fill="none"><line x1="0" y1="0" x2="0" y2="130"/><line x1="0" y1="0" x2="-145" y2="-92"/><line x1="0" y1="0" x2="145" y2="-92"/></g>
+            </g>
+        </svg>
+    </div>
+</body>
+</html>

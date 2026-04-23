@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>16 - Gravitational Shatter Engine [V-OVERHAUL]</title>
+    <style>
+        body { background: #030508; height: 100vh; display: flex; justify-content: center; align-items: center; margin: 0; overflow: hidden; perspective: 1500px;}
+        svg { width: 350px; height: 350px; color: #fff; fill: currentColor; stroke: currentColor; overflow: visible;}
+        
+        /* SHATTER DEBRIS LOGIC */
+        polygon, g { transform-origin: center; animation: shatterExplode 6s infinite cubic-bezier(1, 0, 0.2, 1); }
+        .v-core { fill: #00ffcc; }
+        .y-stem { fill: none; stroke-width: 24px; stroke: #ff0055;}
+
+        /* The explosion expands massively and dynamically in 3D then reverses natively via the curve */
+        @keyframes shatterExplode { 
+            0%, 20% { transform: translate3d(0,0,0) rotate(0deg) scale(1); opacity: 1; filter: blur(0px); } 
+            60% { transform: translate3d(var(--tx), var(--ty), var(--tz)) rotateY(var(--ry)) rotateZ(var(--rz)) scale(1.5); opacity: 0; filter: blur(20px); } 
+            100% { transform: translate3d(0,0,0) rotate(0deg) scale(1); opacity: 1; filter: blur(0px); } 
+        }
+        
+        .c-shell { --tx: 300px; --ty: 200px; --tz: 200px; --ry: 180deg; --rz: 45deg; }
+        .v-core  { --tx: -400px; --ty: -300px; --tz: -200px; --ry: -360deg; --rz: -90deg; }
+        .y-stem  { --tx: 0px; --ty: 600px; --tz: 500px; --ry: 720deg; --rz: 180deg; }
+    </style>
+</head>
+<body>
+    <svg viewBox="-510 -510 1020 1020">
+        <g stroke-linejoin="round" stroke-linecap="round">
+            <polygon class="c-shell" points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" stroke-width="8"/>
+            <polygon class="v-core"  points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" stroke-width="8"/>
+            <g class="y-stem" fill="none"><line x1="0" y1="0" x2="0" y2="130"/><line x1="0" y1="0" x2="-145" y2="-92"/><line x1="0" y1="0" x2="145" y2="-92"/></g>
+        </g>
+    </svg>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>09 - Matrix Glass Data Rain [V-OVERHAUL]</title>
+    <style>
+        body { background: #010203; height: 100vh; display: flex; justify-content: center; align-items: center; margin: 0; overflow: hidden; }
+        
+        /* CSS Matrix Rain */
+        .matrix-rain { position: absolute; top: -50%; width: 100%; height: 200%; background: repeating-linear-gradient(180deg, transparent 0, rgba(0,255,204,0.1) 48%, #00ffcc 50%, transparent 52%, transparent 100%); background-size: 100% 200px; animation: rainDrop 2s infinite linear; z-index: 1;}
+        .matrix-rain::before { content: "1010100101 CONVECTORIFY 110011 MATRIX..."; position: absolute; color: #0055ff; opacity: 0.2; font-family: monospace; font-size: 2rem; word-break: break-all;}
+        
+        .glass-refractor { width: 350px; height: 350px; position: relative; z-index: 10; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.9));}
+        
+        /* The Logo acts as a thick glass stencil */
+        svg { width: 100%; height: 100%; color: #00ffcc; fill: transparent; stroke: currentColor; 
+              backdrop-filter: blur(10px) brightness(1.5); /* Glasmorphism core */
+        }
+
+        .c-shell { stroke-width: 8px; stroke: #113333; fill: rgba(0,255,204,0.02);}
+        .v-core { stroke-width: 8px; stroke: #00ffcc; stroke-dasharray: 40; animation: trace 4s linear infinite;}
+        .y-stem { stroke-width: 8px !important; stroke: #fff; fill: none; }
+
+        @keyframes rainDrop { 0% { transform: translateY(-50%); } 100% { transform: translateY(0); } }
+        @keyframes trace { to { stroke-dashoffset: -200; } }
+    </style>
+</head>
+<body>
+    <div class="matrix-rain"></div>
+    <div class="glass-refractor">
+        <svg viewBox="-510 -510 1020 1020">
+            <g stroke-linejoin="round" stroke-linecap="round">
+                <polygon class="c-shell" points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" />
+                <polygon class="v-core"  points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" />
+                <g class="y-stem" fill="none"><line x1="0" y1="0" x2="0" y2="130"/><line x1="0" y1="0" x2="-145" y2="-92"/><line x1="0" y1="0" x2="145" y2="-92"/></g>
+            </g>
+        </svg>
+    </div>
+</body>
+</html>

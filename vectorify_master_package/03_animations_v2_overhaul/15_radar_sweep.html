@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>15 - X-Ray Tech Sweep [V-OVERHAUL]</title>
+    <style>
+        body { background: #030508; height: 100vh; display: flex; justify-content: center; align-items: center; margin: 0; }
+        .stage { position: relative; width: 350px; height: 350px; }
+        
+        svg { width: 100%; height: 100%; position: absolute; }
+        
+        /* The Background skeleton is always slightly visible */
+        .xray-bg { color: #113333; fill: transparent; stroke: currentColor; stroke-width: 8px; }
+        .xray-bg .y-stem { stroke-width: 8px !important; stroke: #331133; }
+        
+        /* The Frontend active sweep mask reveals colored structural fills */
+        .radar-sweep { color: #00ffcc; fill: rgba(0,255,204,0.15); stroke: currentColor; stroke-width: 8px; mask: url(#radar); filter: drop-shadow(0 0 20px #00ffcc);}
+        .radar-sweep .v-core { fill: rgba(0,255,204,0.3); }
+        .radar-sweep .y-stem { stroke-width: 24px; stroke: #fff;}
+    </style>
+</head>
+<body>
+    <div class="stage">
+        <!-- Background inert structure -->
+        <svg class="xray-bg" viewBox="-510 -510 1020 1020">
+            <g stroke-linejoin="round" stroke-linecap="round">
+                <polygon class="c-shell" points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" />
+                <polygon class="v-core"  points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" />
+                <g class="y-stem" fill="none"><line x1="0" y1="0" x2="0" y2="130"/><line x1="0" y1="0" x2="-145" y2="-92"/><line x1="0" y1="0" x2="145" y2="-92"/></g>
+            </g>
+        </svg>
+
+        <!-- Active Radar Mask layer -->
+        <svg class="radar-sweep" viewBox="-510 -510 1020 1020">
+            <defs>
+                <mask id="radar">
+                    <path d="M0,0 L0,-1000 A1000,1000 0 0,1 1000,0 Z" fill="white">
+                        <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="2s" repeatCount="indefinite" />
+                    </path>
+                    <path d="M0,0 L1000,0 A1000,1000 0 0,1 0,1000 Z" fill="rgba(255,255,255,0.4)">
+                        <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="2s" repeatCount="indefinite" />
+                    </path>
+                </mask>
+            </defs>
+            <g stroke-linejoin="round" stroke-linecap="round">
+                <polygon class="c-shell" points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" />
+                <polygon class="v-core"  points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" />
+                <g class="y-stem" fill="none"><line x1="0" y1="0" x2="0" y2="130"/><line x1="0" y1="0" x2="-145" y2="-92"/><line x1="0" y1="0" x2="145" y2="-92"/></g>
+            </g>
+        </svg>
+    </div>
+</body>
+</html>

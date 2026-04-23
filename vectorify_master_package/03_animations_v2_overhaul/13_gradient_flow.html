@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>13 - Exotic Data Mesh [V-OVERHAUL]</title>
+    <style>
+        body { background: #010203; height: 100vh; display: flex; justify-content: center; align-items: center; margin: 0; }
+        svg { width: 350px; height: 350px; fill: url(#exoticMesh); stroke: none;}
+        
+        /* The entire shape is carved from a living plasma gradient */
+        .c-shell { stroke: #333; stroke-width: 8px; fill: transparent; }
+        .v-core { stroke-width: 8px; filter: drop-shadow(0 20px 30px rgba(0,255,204,0.3));}
+        .y-stem { stroke-width: 24px; stroke: #000; fill: none; }
+    </style>
+</head>
+<body>
+    <svg viewBox="-510 -510 1020 1020">
+        <defs>
+            <!-- A rotating, animated radial gradient creating a plasma mesh flow -->
+            <radialGradient id="exoticMesh" cx="50%" cy="50%" r="70%" fx="30%" fy="30%">
+                <stop offset="0%" stop-color="#00ffcc">
+                    <animate attributeName="stop-color" values="#00ffcc;#ff0055;#0055ff;#00ffcc" dur="6s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="50%" stop-color="#0055ff">
+                    <animate attributeName="stop-color" values="#0055ff;#00ffcc;#ff0055;#0055ff" dur="6s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="100%" stop-color="#ff0055">
+                    <animate attributeName="stop-color" values="#ff0055;#0055ff;#00ffcc;#ff0055" dur="6s" repeatCount="indefinite" />
+                </stop>
+                <animateTransform attributeName="transform" type="rotate" from="0 .5 .5" to="360 .5 .5" dur="8s" repeatCount="indefinite"/>
+            </radialGradient>
+        </defs>
+        <g stroke-linejoin="round" stroke-linecap="round">
+            <polygon class="c-shell" points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" />
+            <polygon class="v-core"  points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" />
+            <g class="y-stem" fill="none"><line x1="0" y1="0" x2="0" y2="130"/><line x1="0" y1="0" x2="-145" y2="-92"/><line x1="0" y1="0" x2="145" y2="-92"/></g>
+        </g>
+    </svg>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>05 - Hover: Interactive Core Explosion [V-OVERHAUL]</title>
+    <style>
+        body { background: #030508; height: 100vh; display: flex; justify-content: center; align-items: center; margin: 0; font-family: sans-serif; overflow: hidden; }
+        
+        .scene { position: relative; width: 350px; height: 350px; cursor: crosshair; }
+        
+        /* DATA TEXT REVEAL ON HOVER */
+        .hidden-data { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+                       color: #00ffcc; text-align: center; letter-spacing: 4px; font-weight: bold; 
+                       opacity: 0; transition: 0.5s; font-size: 0.8rem; pointer-events: none;}
+        
+        svg { width: 100%; height: 100%; position: relative; z-index: 2; transition: 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .c-shell, .v-core, .y-stem { transition: 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55); transform-origin: center; stroke-width: 8px; fill: #111; stroke: #333; }
+        .y-stem { stroke-width: 24px; fill: none; }
+
+        /* THE MASSIVE REACTIVE STATE */
+        .scene:hover .hidden-data { opacity: 1; transform: translate(-50%, -10px); text-shadow: 0 0 20px rgba(0,255,204,0.5); }
+        .scene:hover svg { filter: drop-shadow(0 30px 40px rgba(0,255,204,0.2)); }
+        
+        .scene:hover .c-shell { transform: scale(1.15) rotate(15deg); stroke: #444; fill: rgba(255,255,255,0.02); }
+        .scene:hover .v-core { transform: translateY(60px) scale(0.85); fill: transparent; stroke: #ff0055; stroke-dasharray: 20; animation: traceDash 5s linear infinite; }
+        .scene:hover .y-stem { transform: translateY(-70px) scale(1.1) rotate(180deg); stroke: #00ffcc; }
+        
+        @keyframes traceDash { to { stroke-dashoffset: 1000; } }
+    </style>
+</head>
+<body>
+    <div class="scene">
+        <div class="hidden-data">CONVECTORIFY<br><span style="color:#aaa; font-size: 0.6rem;">CORE UNLOCKED</span></div>
+        <svg viewBox="-510 -510 1020 1020">
+            <g stroke-linejoin="round" stroke-linecap="round">
+                <polygon class="c-shell" points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" />
+                <polygon class="v-core"  points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" />
+                <g class="y-stem" fill="none"><line x1="0" y1="0" x2="0" y2="130"/><line x1="0" y1="0" x2="-145" y2="-92"/><line x1="0" y1="0" x2="145" y2="-92"/></g>
+            </g>
+        </svg>
+    </div>
+</body>
+</html>

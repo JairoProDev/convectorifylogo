@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>02 - Orchestrated Line Draw [V-OVERHAUL]</title>
+    <style>
+        body { background: #030508; height: 100vh; display: flex; justify-content: center; align-items: center; margin: 0; }
+        svg { width: 350px; height: 350px; }
+
+        .c-shell, .v-core { fill: transparent; stroke: #00ffcc; stroke-width: 8px; stroke-dasharray: 4000; stroke-dashoffset: 4000; stroke-linecap: round; }
+        .y-stem { stroke: #00ffcc; stroke-dasharray: 600; stroke-dashoffset: 600; stroke-width: 8px !important; }
+
+        /* MULTI-STAGE EXOTIC DRAW SEQUENCE */
+        .c-shell { animation: drawOuter 2.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        .v-core { animation: drawInner 2s 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .y-stem { animation: shootCore 1s 2.5s cubic-bezier(0, 0.5, 0.5, 1) forwards; }
+        .master-svg { animation: finalFlash 0.5s 4s forwards; }
+
+        @keyframes drawOuter { 50% { stroke-dashoffset: 0; fill: transparent; } 100% { stroke-dashoffset: 0; fill: rgba(0,255,204,0.05); } }
+        @keyframes drawInner { 100% { stroke-dashoffset: 0; fill: rgba(0,255,204,0.15); } }
+        @keyframes shootCore { 100% { stroke-dashoffset: 0; stroke-width: 24px !important; stroke: #fff;} }
+        @keyframes finalFlash { 0% { filter: drop-shadow(0 0 50px #fff) brightness(2); } 100% { filter: drop-shadow(0 20px 30px rgba(0,255,204,0.4)); } }
+    </style>
+</head>
+<body>
+    <svg viewBox="-510 -510 1020 1020" class="master-svg">
+        <g stroke-linejoin="round" stroke-linecap="round">
+            <polygon class="c-shell" points="0,-390 338,-195 225,-130 0,-260 -225,-130 -225,130 0,260 225,130 338,195 0,390 -338,195 -338,-195" />
+            <polygon class="v-core"  points="-225,-130 0,260 225,-130 80,-130 145,-92 0,130 -145,-92 -80,-130" />
+            <g class="y-stem" fill="none"><line x1="0" y1="0" x2="0" y2="130"/><line x1="0" y1="0" x2="-145" y2="-92"/><line x1="0" y1="0" x2="145" y2="-92"/></g>
+        </g>
+    </svg>
+</body>
+</html>
