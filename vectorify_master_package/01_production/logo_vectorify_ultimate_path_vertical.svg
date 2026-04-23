@@ -1,0 +1,12 @@
+<svg viewBox="-350 -400 700 800" xmlns="http://www.w3.org/2000/svg">
+  <!-- THE TRUE MONOLITHIC BOOLEAN PATH 
+       - C Shell, V Arrow, and Y Stem are merged into a single `<path>` element.
+       - The intersecting `<line>` strings of the Y have been mathematically 
+         resolved into a 2D flat 9-point star polygon to avoid internal overlap strokes.
+       - Canva treats this strictly as 1 unified vector object. -->
+  <path fill="#000000" stroke="#000000" stroke-width="8" stroke-linejoin="round" stroke-linecap="round" fill-rule="nonzero" d="
+    M 0,-390 L 338,-195 L 225,-130 L 0,-260 L -225,-130 L -225,130 L 0,260 L 225,130 L 338,195 L 0,390 L -338,195 L -338,-195 Z
+    M -225,-130 L 0,260 L 225,-130 L 80,-130 L 145,-92 L 0,130 L -145,-92 L -80,-130 Z
+    M 0,6.04 L 138.6,-102.1 L 151.4,-81.9 L 12,-13.65 L 12,130 L -12,130 L -12,-13.65 L -151.4,-81.9 L -138.6,-102.1 Z
+  "/>
+</svg>
